@@ -1,10 +1,15 @@
 
+import 'dart:io';
+
 import 'package:chat_up/model/messageModel.dart';
+import 'package:chat_up/screens/inbox/cameraView.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:chat_up/model/chatModel.dart';
 import 'package:chat_up/utils/constants.dart';
 import 'package:chat_up/utils/myWidgets.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 TextEditingController _controller = new TextEditingController();
 class NewChatScreen extends StatefulWidget{
@@ -21,6 +26,54 @@ class _NewChatScreen extends State<NewChatScreen>{
   late IO.Socket socket;
   FocusNode focusNode = FocusNode();
   List<MessageModel> messages = [];
+  ScrollController _scrollController = ScrollController();
+
+   String imgPath = "";
+   String imgExt = "";
+  
+      File? readyUploadImage;
+      bool hasImg = false;
+      getImageGallery() {
+         ImagePicker().pickImage(source: ImageSource.gallery).then((selectedImage) {
+          if (selectedImage == null) return;
+
+          readyUploadImage = File(selectedImage.path);
+          print(readyUploadImage!.path);
+          setState(() {
+            imgPath = readyUploadImage!.path;
+            imgExt = imgPath.split(".").last;
+            hasImg = true;
+      });
+
+          
+          Navigator.push(context, MaterialPageRoute(
+            builder: (context)=> CameraViewPage(imgPath: imgPath, onSendImage:onSendImage)
+          ));
+    });
+
+  }
+
+      getImageCamera() {
+         ImagePicker().pickImage(source: ImageSource.camera).then((selectedImage) {
+          if (selectedImage == null) return;
+
+          readyUploadImage = File(selectedImage.path);
+          print(readyUploadImage!.path);
+          setState(() {
+            imgPath = readyUploadImage!.path;
+            imgExt = imgPath.split(".").last;
+            hasImg = true;
+      });
+
+          Navigator.push(context, MaterialPageRoute(
+              builder: (context)=> CameraViewPage(imgPath: imgPath, onSendImage: onSendImage)
+            ));
+    });
+
+    
+  }
+      
+
 
 
   @override
@@ -74,7 +127,14 @@ class _NewChatScreen extends State<NewChatScreen>{
             // This code puts the incoming message in a list
             // The list is structured in a model which contains type and destination
             // If it receives a message, the setMessage function sets type as destination
-            setMessage("destination",msg["message"]);
+            setMessage(
+              "destination",
+               msg["message"],
+               msg["message"]); //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> check this place later
+            _scrollController.animateTo(
+                _scrollController.position.maxScrollExtent, 
+                duration:Duration(milliseconds: 300),
+                curve: Curves.easeOut );
       });
       
       }
@@ -88,23 +148,42 @@ class _NewChatScreen extends State<NewChatScreen>{
     
   }
 
-  void sendMessage(String message, int sourceId, targetId){
+  void sendMessage(String message, int sourceId, targetId, String imagePath){
 
         // The send message function adds the messages to the list and also sends them through the socket
         // on calling the sendMessage method, the setMessage function sets the type of the message to be 
         // Source before saving in the list
-        setMessage("source", message);
+        setMessage("source", message, imagePath);
         // I first of all send through the event name message before sending an object that actually had the message
-        socket.emit("message", {"message": message,"sourceId":sourceId, "targetId":targetId});
+        socket.emit("message", {"message": message,"sourceId":sourceId, "targetId":targetId, "imagePath": imagePath});
   }
 
 
-  void setMessage(String type, String message ){
+  // Forces all the messages to take 
+  void setMessage(String type, String message, String imagePath ){
 
-      MessageModel messagesModel = MessageModel(message: message, type: type);
+      MessageModel messagesModel = MessageModel(
+        message: message,
+        type: type,
+        imagePath:imagePath,
+        time: DateTime.now().toString().substring(10, 16));
       setState(() {
         messages.add(messagesModel);
       });
+  }
+
+    void onSendImage(String imgPath, String message) async{
+       print("Hey there , it is working $imgPath and the message is: $message");
+       var request = http.MultipartRequest('Post',Uri.parse("https://chatup-node-deploy.herokuapp.com/sendImage/addImage"));
+
+            // The field name is the key value that we used when we were writing the end point
+           request.files.add(await http.MultipartFile.fromPath('img', imgPath));
+           request.headers.addAll({
+            "Content-type":"multipart/form-data"
+           });
+
+           http.StreamedResponse response = await request.send();
+           print(response.statusCode);
   }
 
   @override 
@@ -123,9 +202,17 @@ class _NewChatScreen extends State<NewChatScreen>{
                 Expanded(
                   child: ListView.builder(
                     
+                    controller: _scrollController,
                     shrinkWrap: true,
-                    itemCount: messages.length,
+                    itemCount: messages.length+1,
                     itemBuilder: (context,index){
+
+                       if(index == messages.length){
+
+                            return Container(
+                              height: 70,
+                            );
+                       }
 
                        if(messages[index].type == "source"){
 
@@ -142,6 +229,14 @@ class _NewChatScreen extends State<NewChatScreen>{
                     
                     
                   ),
+
+                  // child: ListView(
+                  //   children: [
+                  //     MyWidgets().ownPictureCard(context, imgPath),
+                  //     MyWidgets().replyPictureCard(context, imgPath),
+                  //   ],
+                    
+                  // )
                 ),
                 Align(
                   alignment: Alignment.bottomCenter,
@@ -159,8 +254,8 @@ class _NewChatScreen extends State<NewChatScreen>{
                               // handles the action performed anytime you press the send button
                               onPressed:(){
 
-                                // sendMessage(msgInputController.text);
-                                // msgInputController.text = "";
+                                sendPicture(context);
+                                
                               } ,
 
                               icon: Icon(Icons.add, color: Constants().purple,),
@@ -198,7 +293,16 @@ class _NewChatScreen extends State<NewChatScreen>{
 
                                 if(_controller.text != ""){
 
-                                    sendMessage(_controller.text, widget.sourceChat.id, widget.chatModels.id);
+                                    FocusScope.of(context).unfocus();
+                                    _scrollController.animateTo(
+                                          _scrollController.position.maxScrollExtent, 
+                                          duration:Duration(milliseconds: 300),
+                                          curve: Curves.easeOut );
+                                    sendMessage(
+                                      _controller.text,
+                                      widget.sourceChat.id,
+                                      widget.chatModels.id,
+                                      "");
                                     _controller.text = "";
                                 }
                               } ,
@@ -224,6 +328,96 @@ class _NewChatScreen extends State<NewChatScreen>{
           ),
         );
   }
+
+
+  sendPicture(BuildContext context) {
+  return showModalBottomSheet(
+    context: context,
+    builder: (context) {
+      return SizedBox(
+        height: 150,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+             Padding(
+              padding: EdgeInsets.symmetric(vertical: 5.0),
+              child: Align(
+                alignment: Alignment.center,
+                child: Text(
+                  "Send image from:",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 5),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: () {
+
+                    getImageCamera();
+                    Navigator.pop(context);
+                    // Navigator.pop(context);
+                    // Navigator.push(context, MaterialPageRoute(
+                    //   builder: (context)=> CameraViewPage(imgPath: imgPath,)
+                    // ));
+                  },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children:  [
+                      CircleAvatar(
+                        radius: 25,
+                        backgroundColor: Constants().purple,
+                        child: Icon(Icons.camera),
+                      
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        "Camera",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    getImageGallery();
+                    Navigator.pop(context);
+                     
+                    
+
+                  },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children:  [
+                      CircleAvatar(
+                        radius: 25,
+                        backgroundColor: Constants().purple,
+                        child: Icon(Icons.image),
+                      ),
+                      SizedBox(height: 5),
+                      Text("Gallery", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+
 
   
 }

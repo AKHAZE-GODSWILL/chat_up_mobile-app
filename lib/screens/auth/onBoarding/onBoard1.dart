@@ -6,17 +6,16 @@ import 'package:flutter/rendering.dart';
 import 'package:localstorage/localstorage.dart';
 import 'package:localstorage/localstorage.dart';
 
-import '../../main.dart';
 
-class Onboarding extends StatefulWidget{
+class FirstOnBoard extends StatefulWidget{
 
   @override 
-  State<Onboarding> createState()=> _OnboardingState ();
+  State<FirstOnBoard> createState()=> _FirstOnBoard ();
 
  
 }
 
-class _OnboardingState extends State<Onboarding> {
+class _FirstOnBoard extends State<FirstOnBoard> {
 
 
     @override 
@@ -45,7 +44,7 @@ class _OnboardingState extends State<Onboarding> {
 
                     decoration: BoxDecoration(
                     image: DecorationImage(
-                    image: AssetImage("assets/Illustration.png"),
+                    image: AssetImage("assets/Illustration1.png"),
                     fit: BoxFit.fitHeight
                   )
                 ),
@@ -81,44 +80,12 @@ class _OnboardingState extends State<Onboarding> {
               )),
 
 
-              SizedBox(
-                  height:100
-                ),
+              
+
 
               
-              Text("Terms and privacy policy"),
 
-
-              SizedBox(
-                  height:30
-                ),
-
-              GestureDetector(
-                
-                onTap: (){
-
-                    Navigator.push(context,MaterialPageRoute(
-                      builder: (context)=> SignUp()
-                    ));
-
-                },
-
-                child: Container(
-
-                  width: 327,
-                  height:52,
-                  decoration: BoxDecoration(
-
-                    color: Constants().purple,
-                    borderRadius: BorderRadius.circular(30)
-                  ),
-
-                  child: Center(child: Text("Start messaging",
-                  
-                          style: TextStyle(
-                            color: Colors.white
-                          ))),
-                ))
+              
 
             ],
           ),

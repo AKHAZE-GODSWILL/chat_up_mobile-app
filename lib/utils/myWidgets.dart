@@ -1,4 +1,7 @@
 
+
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_up/utils/constants.dart';
 import 'package:flutter/cupertino.dart';
@@ -10,7 +13,6 @@ import '../main.dart';
 
 class MyWidgets {
 
-  
   appBar(
       {required BuildContext ctx, required String title, bool toHome = false}) {
     return AppBar(
@@ -263,5 +265,57 @@ class MyWidgets {
         ),),
       );
 
+  }
+
+  Widget ownPictureCard(context, imgPath){
+
+      return Align(
+        alignment: Alignment.centerRight,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 5),
+          child: Container(
+            height: MediaQuery.of(context).size.height/3.8,
+            width: MediaQuery.of(context).size.width/1.4,
+            decoration: BoxDecoration(
+              color: constants.purple,
+              borderRadius: BorderRadius.circular(16)
+            ),
+            child: Card(
+              margin: EdgeInsets.all(3),
+              shape: RoundedRectangleBorder(
+                borderRadius:BorderRadius.circular(16)
+              ),
+              // child: Image.file(File(imgPath)),
+            ),
+          ),
+        ),
+      );
+  }
+
+
+  Widget replyPictureCard(context, imgPath){
+
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 5),
+          child: Container(
+            height: MediaQuery.of(context).size.height/3.8,
+            width: MediaQuery.of(context).size.width/1.4,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16)
+            ),
+            child: Card(
+              margin: EdgeInsets.all(3),
+              shape: RoundedRectangleBorder(
+                borderRadius:BorderRadius.circular(16)
+              ),
+              // child: Image.file(File(imgPath)),
+
+            ),
+          ),
+        ),
+      );
   }
 }
