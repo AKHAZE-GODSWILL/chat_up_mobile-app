@@ -1,3 +1,6 @@
+import 'package:chat_up/model/messageModel.dart';
+
+
 
       class ChatModel{
 
@@ -7,6 +10,7 @@
         String time;
         String currentMessage;
         int id;
+        
 
         ChatModel({
                    required this.id,

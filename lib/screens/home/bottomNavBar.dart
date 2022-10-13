@@ -1,6 +1,4 @@
 
-
-
 import 'package:chat_up/model/chatModel.dart';
 import 'package:chat_up/screens/home/findFriends.dart';
 import 'package:chat_up/screens/home/homeScreen.dart';
@@ -19,7 +17,7 @@ class BottomNavBar extends StatefulWidget{
 class _BottomNavBar extends State<BottomNavBar>{
 
 
-
+    
     int current_index = 1;
   
 

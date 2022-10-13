@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:chat_up/main.dart';
 import 'package:chat_up/utils/constants.dart';
 import 'package:flutter/material.dart';
 
@@ -50,13 +51,15 @@ class CameraViewPage extends StatelessWidget{
           height: MediaQuery.of(context).size.height,
           child: Stack(
             children: [
-              Container(
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height-150,
-                child: Image.file(
-                  File(imgPath),
-                  fit: BoxFit.cover
-                )
+              Center(
+                child: Container(
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height-350,
+                  child: Image.file(
+                    File(imgPath),
+                    fit: BoxFit.cover
+                  )
+                ),
               ),
 
               Positioned(
@@ -83,9 +86,12 @@ class CameraViewPage extends StatelessWidget{
                         size: 27,
                       ),
                       suffixIcon: InkWell(
-                        onTap: () => onSendImage(imgPath, _controller.text.trim()),
+                        onTap: (){
+                          onSendImage(imgPath, _controller.text.trim());
+                          Navigator.pop(context);
+                        },
                         child: CircleAvatar(
-                           backgroundColor: Constants().purple,
+                           backgroundColor: constants.purple,
                            radius: 27,
                            child: Icon(
                             Icons.send,

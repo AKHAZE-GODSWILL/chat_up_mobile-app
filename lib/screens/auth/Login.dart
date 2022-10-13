@@ -1,4 +1,5 @@
 
+import 'package:chat_up/main.dart';
 import 'package:chat_up/screens/auth/fakeLogin.dart';
 import 'package:chat_up/screens/home/bottomNavBar.dart';
 import 'package:chat_up/utils/constants.dart';
@@ -22,6 +23,7 @@ class _Login extends State<Login>{
 
         return Scaffold(
 
+          resizeToAvoidBottomInset: false,
           body: Container(
 
             width: double.infinity,
@@ -115,7 +117,7 @@ class _Login extends State<Login>{
                                child: TextField(
                           
                                             style: TextStyle(
-                                              color: Colors.white
+                                              color: constants.purple
                                             ),
                           
                                             
@@ -167,7 +169,7 @@ class _Login extends State<Login>{
                                child: TextField(
                           
                                             style: TextStyle(
-                                              color: Colors.white
+                                              color: constants.purple
                                             ),
                           
                                             
@@ -222,7 +224,7 @@ class _Login extends State<Login>{
 
                 child: Container(
 
-                  width: 327,
+                  width: MediaQuery.of(context).size.width-100,
                   height:52,
                   decoration: BoxDecoration(
 

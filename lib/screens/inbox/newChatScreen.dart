@@ -1,4 +1,5 @@
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:chat_up/model/messageModel.dart';
@@ -10,6 +11,11 @@ import 'package:chat_up/utils/constants.dart';
 import 'package:chat_up/utils/myWidgets.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
+// Need to figure out how to set different width and height for different widgets in different sizes of screen
+// the app must be responsive as possible, also I need to stop everything from shifting up when the on screen 
+// keyboard comes on
+// Also, i need to be able to set the sent and not sent message, to know if your message went through
 
 TextEditingController _controller = new TextEditingController();
 class NewChatScreen extends StatefulWidget{
@@ -31,6 +37,7 @@ class _NewChatScreen extends State<NewChatScreen>{
    String imgPath = "";
    String imgExt = "";
   
+      
       File? readyUploadImage;
       bool hasImg = false;
       getImageGallery() {
@@ -99,7 +106,8 @@ class _NewChatScreen extends State<NewChatScreen>{
 
     print(widget.sourceChat);
     
-    socket = IO.io("https://chatup-node-deploy.herokuapp.com/", <String, dynamic>{
+    //https://chatup-node-deploy.herokuapp.com/
+    socket = IO.io("http://localhost:8000/", <String, dynamic>{
 
       "transports":["websocket"],
       "autoConnect": false       // Sometimes, the code might fail to connect automatically , so you have to make it false
@@ -130,7 +138,7 @@ class _NewChatScreen extends State<NewChatScreen>{
             setMessage(
               "destination",
                msg["message"],
-               msg["message"]); //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> check this place later
+               msg["imagePath"]); //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> check this place later
             _scrollController.animateTo(
                 _scrollController.position.maxScrollExtent, 
                 duration:Duration(milliseconds: 300),
@@ -155,7 +163,12 @@ class _NewChatScreen extends State<NewChatScreen>{
         // Source before saving in the list
         setMessage("source", message, imagePath);
         // I first of all send through the event name message before sending an object that actually had the message
-        socket.emit("message", {"message": message,"sourceId":sourceId, "targetId":targetId, "imagePath": imagePath});
+        socket.emit("message", {
+          "message": message,
+          "sourceId":sourceId,
+          "targetId":targetId,
+          "imagePath": imagePath
+          });
   }
 
 
@@ -174,6 +187,7 @@ class _NewChatScreen extends State<NewChatScreen>{
 
     void onSendImage(String imgPath, String message) async{
        print("Hey there , it is working $imgPath and the message is: $message");
+       
        var request = http.MultipartRequest('Post',Uri.parse("https://chatup-node-deploy.herokuapp.com/sendImage/addImage"));
 
             // The field name is the key value that we used when we were writing the end point
@@ -183,7 +197,18 @@ class _NewChatScreen extends State<NewChatScreen>{
            });
 
            http.StreamedResponse response = await request.send();
+           var httpResponse = await http.Response.fromStream(response);
+           var data = await json.decode(httpResponse.body);
+           print(data['path']);
            print(response.statusCode);
+
+           setMessage("source", message, imgPath);
+        // I first of all send through the event name message before sending an object that actually had the message
+        socket.emit("message", 
+          {"message": message,
+          "sourceId":widget.sourceChat.id,
+          "targetId":widget.chatModels.id,
+          "imagePath":data['path']});
   }
 
   @override 
@@ -216,10 +241,21 @@ class _NewChatScreen extends State<NewChatScreen>{
 
                        if(messages[index].type == "source"){
 
-                        return MyWidgets().ownMessageCard(context: context, message: messages[index].message);
+                          if(messages[index].imagePath.isNotEmpty){
+               
+                            return MyWidgets().ownPictureCard(context, messages[index].imagePath, messages[index].message );
+                          }
+
+                          return MyWidgets().ownMessageCard(context: context, message: messages[index].message);
+                        
                        }
 
                        else{
+
+                          if(messages[index].imagePath.isNotEmpty){
+                              return MyWidgets().replyPictureCard(context, messages[index].imagePath, messages[index].message);
+                              
+                          }
 
                           return MyWidgets().replyCard(context: context, message: messages[index].message);
                        }
@@ -276,7 +312,7 @@ class _NewChatScreen extends State<NewChatScreen>{
                                   focusNode: focusNode,
                                   textAlignVertical: TextAlignVertical.center,
                                   keyboardType: TextInputType.multiline,
-                                  maxLines: 5,
+                                  maxLines: null,
                                   minLines: 1,
                                   decoration: InputDecoration(
                                     border:InputBorder.none,

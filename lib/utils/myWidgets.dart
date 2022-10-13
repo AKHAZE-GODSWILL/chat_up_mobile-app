@@ -267,25 +267,65 @@ class MyWidgets {
 
   }
 
-  Widget ownPictureCard(context, imgPath){
+  Widget ownPictureCard(context, imgPath, message){
 
       return Align(
         alignment: Alignment.centerRight,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 5),
           child: Container(
-            height: MediaQuery.of(context).size.height/3.8,
-            width: MediaQuery.of(context).size.width/1.4,
+            constraints: BoxConstraints(
+              minHeight: 150,
+              maxWidth: 230
+            ),
+            // width: MediaQuery.of(context).size.width/1.4,
             decoration: BoxDecoration(
               color: constants.purple,
               borderRadius: BorderRadius.circular(16)
             ),
-            child: Card(
-              margin: EdgeInsets.all(3),
-              shape: RoundedRectangleBorder(
-                borderRadius:BorderRadius.circular(16)
-              ),
-              // child: Image.file(File(imgPath)),
+            child: Column(
+              
+              children: [
+                Container(
+                  constraints: BoxConstraints(
+                    minHeight: 150,
+                    maxHeight: 200,
+                    minWidth: 230,
+                    maxWidth: 230
+                    ),
+                  margin: EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16)),
+                child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.file(
+                          File(imgPath),
+                          fit: BoxFit.cover),),
+            
+            ),
+                
+                
+            
+                message != null? Text("$message",
+                    style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w400,
+                            fontSize: 14,
+                                )
+                ): SizedBox(),
+              ],
+
+              // Card(
+                  
+              //     margin: EdgeInsets.all(3),
+              //     shape: RoundedRectangleBorder(
+              //       borderRadius:BorderRadius.circular(16)
+              //     ),
+              //     child: Image.file(
+              //       File(imgPath),
+              //       fit: BoxFit.fill),
+              //   ),
             ),
           ),
         ),
@@ -293,29 +333,67 @@ class MyWidgets {
   }
 
 
-  Widget replyPictureCard(context, imgPath){
+  Widget replyPictureCard(context, imgPath,message ){
 
       return Align(
         alignment: Alignment.centerLeft,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 5),
           child: Container(
-            height: MediaQuery.of(context).size.height/3.8,
-            width: MediaQuery.of(context).size.width/1.4,
+            constraints: BoxConstraints(
+              minHeight: 150,
+              maxWidth: 230
+            ),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16)
             ),
-            child: Card(
-              margin: EdgeInsets.all(3),
-              shape: RoundedRectangleBorder(
-                borderRadius:BorderRadius.circular(16)
-              ),
-              // child: Image.file(File(imgPath)),
+            child: Column(
+              
+              children: [
+                Container(
+                  constraints: BoxConstraints(
+                    minHeight: 150,
+                    maxHeight: 200,
+                    minWidth: 230,
+                    maxWidth: 230
+                    ),
+                  margin: EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16)),
+                child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                    "https://chatup-node-deploy.herokuapp.com/uploads/$imgPath",
+                    fit: BoxFit.cover),),
+            
+            ),
+                
+                
+            
+                message != null? Text("$message",
+                    style: TextStyle(
+                            color: constants.purple,
+                            fontWeight: FontWeight.w400,
+                            fontSize: 14,
+                                )
+                ): SizedBox(),
+              ],
 
+            
             ),
           ),
         ),
       );
   }
 }
+
+// Column(
+//                 children: [
+//                   Image.network(
+//                     "https://chatup-node-deploy.herokuapp.com/uploads/$imgPath",
+//                     fit: BoxFit.cover),
+//                     message != null? Text("$message"): SizedBox(),
+//                 ],
+//               ),
