@@ -3,8 +3,7 @@ import 'package:chat_up/screens/auth/SignUp.dart';
 import 'package:chat_up/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:localstorage/localstorage.dart';
-import 'package:localstorage/localstorage.dart';
+
 
 
 class ThirdOnBoard extends StatefulWidget{

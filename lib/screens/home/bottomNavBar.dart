@@ -1,25 +1,41 @@
 
 
-
-import 'package:chat_up/model/chatModel.dart';
 import 'package:chat_up/screens/home/findFriends.dart';
 import 'package:chat_up/screens/home/homeScreen.dart';
 import 'package:chat_up/screens/home/settings.dart';
 import 'package:chat_up/utils/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/adapters.dart';
 
 class BottomNavBar extends StatefulWidget{
 
-  const BottomNavBar({Key? key, required this.chatModels, required this.sourceChat}) : super(key: key);
- final List<ChatModel> chatModels;
- final ChatModel sourceChat;
+  const BottomNavBar({Key? key}) : super(key: key);
   State<BottomNavBar> createState()=> _BottomNavBar();
 }
 
 class _BottomNavBar extends State<BottomNavBar>{
 
+    // final _myBox = Hive.box('myBox');
 
+    @override
+    void initState() {
+    print("bottom nav bar");
+    super.initState();
+    }
+    
+    //code to read data into the database
+    void readData(){
+      
+    }
+    
+    //code to write data into the database
+    void writeData(){
 
+    }
+    //Code to delete data from the database
+    void deleteData(){
+
+    }
     int current_index = 1;
   
 
@@ -31,12 +47,7 @@ class _BottomNavBar extends State<BottomNavBar>{
   }
 
 
-  @override
-  void initState() {
-    print("bottom nav bar");
-    print(widget.sourceChat);
-    super.initState();
-  }
+  
 
 
   @override 
@@ -47,7 +58,7 @@ class _BottomNavBar extends State<BottomNavBar>{
         List screens = [
     // HomePage(response: widget.response),
     FindFriends(),
-    HomeScreen(chatModels: widget.chatModels, sourceChat: widget.sourceChat),
+    HomeScreen(),
     Settings(),
   ];
 

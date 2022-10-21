@@ -1,9 +1,15 @@
 
+import 'package:chat_up/model/chatModel.dart';
+import 'package:chat_up/model/messageModel.dart';
 import 'package:chat_up/screens/auth/onBoarding/onBoard.dart';
-import 'package:chat_up/screens/inbox/chatScreen.dart';
+import 'package:chat_up/screens/home/bottomNavBar.dart';
 import 'package:chat_up/utils/constants.dart';
+import 'package:chat_up/utils/myWidgets.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart' as path_provider;
+
 
 
 ////// Phase 1
@@ -25,11 +31,32 @@ import 'package:get_storage/get_storage.dart';
 /// in the app.
 /// On the newChat screen, find out why I was able to pass a fuction without parenthensis to another page
 /// Check the function of the streamed response and the toSubString in dart
+/// Find out the reason why the print statement has not been working since, but the end point is firing
+/// If there is no data, the sent image does not even display on the senders screen. I fix that bug
 Constants constants = Constants();
+final getX = GetStorage();
+final myWidgets = MyWidgets();
 
-
+// From my observations, I noticed that we had to call the adapters first,
+// Than await all the open box operations. If not, you have errors at the very 
+// moment of opening the app
 Future <void> main() async{
+  // final appDocumentDirectory = await path_provider.getApplicationDocumentsDirectory();
+
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+
+  Hive.registerAdapter(ChatModelAdapter());
+  Hive.registerAdapter(MessageModelAdapter());
+
+  await Hive.openBox('messages');
+  await Hive.openBox('contacts');
+  await Hive.openBox('chats');
+ 
+  await GetStorage.init();
+  
   runApp( MyApp());
+  
 }
 
 class MyApp extends StatelessWidget {
@@ -53,14 +80,7 @@ class MyApp extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity
       ),
 
-      // home: const MyHomePage(title: 'Flutter Demo Home Page'),
-
-      initialRoute: "onboarding",
-      routes: {
-
-        "onboarding": (BuildContext context) => MyOnboarding(),
-        "chatScreen": (BuildContext context) => ChatScreen(),
-      },
+      home: getX.read(constants.GETX_IS_LOGGED_IN) == "true" ? BottomNavBar() : MyOnboarding()
     );
   }
 }

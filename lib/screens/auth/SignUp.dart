@@ -1,15 +1,12 @@
 
+import 'dart:convert';
+
+import 'package:chat_up/main.dart';
 import 'package:chat_up/screens/auth/Login.dart';
-import 'package:chat_up/screens/auth/fakeLogin.dart';
 import 'package:chat_up/screens/home/bottomNavBar.dart';
-import 'package:chat_up/utils/constants.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 
-
-
-TextEditingController fullnameController = TextEditingController();
-TextEditingController emailController = TextEditingController();
-TextEditingController passwordController = TextEditingController();
 
 class SignUp extends StatefulWidget{
 
@@ -19,6 +16,15 @@ class SignUp extends StatefulWidget{
 
 class _SignUp extends State<SignUp>{
 
+  TextEditingController fullNameController = TextEditingController();
+
+  TextEditingController emailController = TextEditingController();
+
+  TextEditingController passwordController = TextEditingController();
+
+  int loadingState = 0;
+
+  String httpBaseUrl = "chatup-node-deploy.herokuapp.com";
 
   @override 
 
@@ -26,11 +32,12 @@ class _SignUp extends State<SignUp>{
 
         return Scaffold(
 
+          resizeToAvoidBottomInset: false,
           body: Container(
 
             width: double.infinity,
             height: double.infinity,
-            color: Constants().purple,
+            color: constants.purple,
 
             child: Stack(
               children: [
@@ -125,18 +132,18 @@ class _SignUp extends State<SignUp>{
                                child: TextField(
                           
                                             style: TextStyle(
-                                              color: Colors.white
+                                              color: constants.purple
                                             ),
                           
                                             
                                             
-                                            cursorColor: Constants().purple,
-                                            controller: fullnameController,
+                                            cursorColor: constants.purple,
+                                            controller: fullNameController,
                                             decoration: InputDecoration(
                           
                                               // How the border looks like when you are not typing
                                               
-                                              fillColor: Constants().textFieldColor,
+                                              fillColor: constants.textFieldColor,
                                               filled: true,
                                               enabledBorder: OutlineInputBorder(
                           
@@ -176,36 +183,28 @@ class _SignUp extends State<SignUp>{
                              Container(
                               height: 51,
                               margin: EdgeInsets.only(left: 20,right: 20),
-
-
-                               child: TextField(
+                              child:
+                               TextField(
+                                 style: TextStyle(color: constants.purple), 
+                                 cursorColor: constants.purple,
+                                 controller: emailController,
+                                 decoration: 
+                                  InputDecoration(
+                                     // How the border looks like when you are not typing        
+                                    fillColor: constants.textFieldColor,
+                                    filled: true,
+                                    enabledBorder: 
+                                      OutlineInputBorder(
+                                        borderSide: BorderSide(color: Colors.white),
+                                        borderRadius: BorderRadius.circular(20)
+                                      ),
                           
-                                            style: TextStyle(
-                                              color: Colors.white
-                                            ),
-                          
-                                            
-                                            
-                                            cursorColor: Constants().purple,
-                                            controller: emailController,
-                                            decoration: InputDecoration(
-                          
-                                              // How the border looks like when you are not typing
-                                              
-                                              fillColor: Constants().textFieldColor,
-                                              filled: true,
-                                              enabledBorder: OutlineInputBorder(
-                          
-                                                borderSide: BorderSide(color: Colors.white),
-                                                borderRadius: BorderRadius.circular(20)
-                                              ),
-                          
-                                              // How the border looks like when you are typing
-                                              focusedBorder: OutlineInputBorder(
-                          
-                                                borderSide: BorderSide(color: Colors.white),
-                                                borderRadius: BorderRadius.circular(10)
-                                              ),
+                                      // How the border looks like when you are typing
+                                    focusedBorder:
+                                     OutlineInputBorder(
+                                       borderSide: BorderSide(color: Colors.white),
+                                       borderRadius: BorderRadius.circular(10)
+                                     ),
                           
                                               // The send icon 
                                               
@@ -233,18 +232,18 @@ class _SignUp extends State<SignUp>{
                                child: TextField(
                           
                                             style: TextStyle(
-                                              color: Colors.white
+                                              color: constants.purple
                                             ),
                           
                                             
                                             
-                                            cursorColor: Constants().purple,
+                                            cursorColor: constants.purple,
                                             controller: passwordController,
                                             decoration: InputDecoration(
                           
                                               // How the border looks like when you are not typing
                                               
-                                              fillColor: Constants().textFieldColor,
+                                              fillColor: constants.textFieldColor,
                                               filled: true,
                                               enabledBorder: OutlineInputBorder(
                           
@@ -280,19 +279,21 @@ class _SignUp extends State<SignUp>{
                 
                 onTap: (){
 
-                    Navigator.push(context,MaterialPageRoute(
-                      builder: (context)=> FakeLogin()
-                    ));
+                    signUpUser(
+                      fullname: fullNameController.text.trim(),
+                      email: emailController.text.trim(),
+                      password: passwordController.text.trim()
+                    );
 
                 },
 
                 child: Container(
 
-                  width: 327,
+                  width: MediaQuery.of(context).size.width-100,
                   height:52,
                   decoration: BoxDecoration(
 
-                    color: Constants().purple,
+                    color: constants.purple,
                     borderRadius: BorderRadius.circular(10)
                   ),
 
@@ -331,7 +332,7 @@ class _SignUp extends State<SignUp>{
                       child: Text("Login",
                         
                                 style: TextStyle(
-                                  color: Constants().purple
+                                  color: constants.purple
                                 )),
                     ),
                   ],
@@ -343,5 +344,62 @@ class _SignUp extends State<SignUp>{
             ),
           ),
         );
+  }
+
+  signUpUser({required fullname, required email,required password}) async {
+    setState(() {
+      loadingState = 1;
+    });
+    http.Client client = http.Client();
+    try {
+      http.Response response = await client.post(
+        Uri.https(httpBaseUrl,"/auth/signup"),
+        body: json.encode(
+          {
+            "fullname": fullname,
+            "email": email,
+            "password": password,
+          },
+        ),
+        headers: {
+          "Content-Type": "application/json"
+        },
+      );
+      dynamic decodedResponse = jsonDecode(utf8.decode(response.bodyBytes)) as Map;
+      print(decodedResponse);
+      print(">>>>>>>>>> ${decodedResponse["status"]}, ${decodedResponse["msg"]}, ${decodedResponse["user"]}");
+      if (decodedResponse["status"] == "ok") {
+        print('>>>>>>>>>>>>>>>>>>>>>>> $decodedResponse ');
+
+        /////////// change this place before you move forward
+        getX.write(constants.GETX_TOKEN, decodedResponse["token"]);
+        getX.write(constants.GETX_IS_LOGGED_IN, "true");
+        getX.write(constants.GETX_USER_ID, decodedResponse["user"]["_id"]);
+
+        setState(() {
+          loadingState = 2;
+        });
+
+        print("I got here this is after setting the loading state back to 2, immediately before the push");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context)=> BottomNavBar()
+          )
+        );
+      } else {
+        setState(() {
+          loadingState = 0;
+        });
+      }
+
+      print("I got here this is after the push");
+    } catch (e) {
+      setState(() {
+        loadingState = 0;
+      });
+      print('>>>>>>>>>>>>>>>>>>>>>>> $e');
+      return e;
+    }
   }
 }
