@@ -1,12 +1,11 @@
 
+import 'dart:convert';
+
 import 'package:chat_up/main.dart';
-import 'package:chat_up/screens/auth/fakeLogin.dart';
+import 'package:http/http.dart' as http;
 import 'package:chat_up/screens/home/bottomNavBar.dart';
-import 'package:chat_up/utils/constants.dart';
 import 'package:flutter/material.dart';
 
-TextEditingController emailController = TextEditingController();
-TextEditingController passwordController = TextEditingController();
 
 class Login extends StatefulWidget{
 
@@ -16,6 +15,13 @@ class Login extends StatefulWidget{
 
 class _Login extends State<Login>{
 
+  TextEditingController emailController = TextEditingController();
+
+  TextEditingController passwordController = TextEditingController();
+
+  int loadingState = 0;
+
+  String httpBaseUrl = "chatup-node-deploy.herokuapp.com";
 
   @override 
 
@@ -28,7 +34,7 @@ class _Login extends State<Login>{
 
             width: double.infinity,
             height: double.infinity,
-            color: Constants().purple,
+            color: constants.purple,
 
             child: Stack(
               children: [
@@ -122,13 +128,13 @@ class _Login extends State<Login>{
                           
                                             
                                             
-                                            cursorColor: Constants().purple,
+                                            cursorColor: constants.purple,
                                             controller: emailController,
                                             decoration: InputDecoration(
                           
                                               // How the border looks like when you are not typing
                                               
-                                              fillColor: Constants().textFieldColor,
+                                              fillColor: constants.textFieldColor,
                                               filled: true,
                                               enabledBorder: OutlineInputBorder(
                           
@@ -174,13 +180,13 @@ class _Login extends State<Login>{
                           
                                             
                                             
-                                            cursorColor: Constants().purple,
+                                            cursorColor: constants.purple,
                                             controller: passwordController,
                                             decoration: InputDecoration(
                           
                                               // How the border looks like when you are not typing
                                               
-                                              fillColor: Constants().textFieldColor,
+                                              fillColor: constants.textFieldColor,
                                               filled: true,
                                               enabledBorder: OutlineInputBorder(
                           
@@ -216,9 +222,9 @@ class _Login extends State<Login>{
                 
                 onTap: (){
 
-                    Navigator.push(context,MaterialPageRoute(
-                      builder: (context)=> FakeLogin()
-                    ));
+                    LoginUser(
+                      email: emailController.text.trim(),
+                      password: passwordController.text.trim());
 
                 },
 
@@ -228,7 +234,7 @@ class _Login extends State<Login>{
                   height:52,
                   decoration: BoxDecoration(
 
-                    color: Constants().purple,
+                    color: constants.purple,
                     borderRadius: BorderRadius.circular(10)
                   ),
 
@@ -251,5 +257,71 @@ class _Login extends State<Login>{
             ),
           ),
         );
+  }
+
+    LoginUser({required email, required password}) async {
+    setState(() {
+      loadingState = 1;
+    });
+    // SharedPreferences pref = await SharedPreferences.getInstance();
+    // Constants constants = Constants();
+    http.Client client = http.Client();
+
+    try {
+      http.Response response = await client.post(
+        Uri.https(httpBaseUrl, "/auth/login"),
+        body: json.encode(
+          {
+            "email": email,
+            "password": password,
+          },
+        ),
+        headers: {
+          "Content-Type": "application/json"
+        },
+      );
+      dynamic decodedResponse = jsonDecode(utf8.decode(response.bodyBytes)) as Map;
+
+      print(decodedResponse);
+
+      print(">>>>>>>>>> ${decodedResponse["status"]}, ${decodedResponse["msg"]}, ${decodedResponse["user"]}");
+
+      if (decodedResponse["status"] == "ok") {
+
+        print('>>>>>>>>>>>>>>>>>>>>>>> $decodedResponse ');
+
+        /////////// change this place before you move forward
+        getX.write(constants.GETX_TOKEN, decodedResponse["user"]["token"]);
+        getX.write(constants.GETX_IS_LOGGED_IN, "true");
+        getX.write(constants.GETX_USER_ID, decodedResponse["user"]["_id"]);
+
+        print("I got here thiis after saving the necessary stuffs to the getx");
+
+        setState(() {
+          loadingState = 2;
+        });
+
+        print("I got here this is after setting the loading state back to 2");
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context)=> BottomNavBar()
+          )
+        );
+      } else {
+        setState(() {
+          loadingState = 0;
+        });
+      }
+
+      print("I got here this is after the push");
+    } catch (e) {
+      setState(() {
+        loadingState = 0;
+      });
+      print('>>>>>>>>>>>>>>>>>>>>>>> $e');
+      return e;
+    }
   }
 }

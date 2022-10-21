@@ -105,7 +105,7 @@ class MyWidgets {
     );
   }
 
-  dynamic showSnackbar({required String message}){
+  dynamic showToast({required String message}){
       //ios uses uiAlertView, similar to those error dialogs i used in login/register
     // ScaffoldMessenger.of(context).showSnackBar(
     //   SnackBar(

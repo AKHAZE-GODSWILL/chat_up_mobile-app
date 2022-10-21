@@ -1,130 +1,111 @@
 
-
-
 import 'package:chat_up/model/chatModel.dart';
-import 'package:chat_up/screens/inbox/chatScreen.dart';
 import 'package:chat_up/screens/inbox/newChatScreen.dart';
 import 'package:chat_up/utils/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class HomeScreen extends StatefulWidget{
 
-  const HomeScreen({Key? key, required this.chatModels, required this.sourceChat}) : super(key: key);
- final List<ChatModel> chatModels;
- final ChatModel sourceChat;
+  const HomeScreen({Key? key}) : super(key: key);
   State<HomeScreen> createState()=> _HomeScreen();
 }
 
-class _HomeScreen extends State<HomeScreen>{@override
+class _HomeScreen extends State<HomeScreen>{
+  List<ChatModel> usersList = [];
+  bool isGroup= false;
+  Box chatsBox = Hive.box('chats');
+  // Future openBox()async{
+  //   chatsBox = await Hive.openBox('chats');
+  // }
+  @override
   void initState() {
-    print("");
-                             print(widget.sourceChat);
+
+    print('before the box has been accessed in the init state');
+    readChats();
+    print("after the box has been accessed in the init state");
+    // final chatBox = Hive.box('chat');
+    // final chatBox = Hive.box('chats');
+    // usersList.addAll(chatBox.values.toList()
+    // .cast<ChatModel>()
+    // );
     super.initState();
   }
 
 
-
-
-  // List<ChatModel> chats = [
-  //   ChatModel(name: "Mira Deebug", 
-  //     icon: "person.svg", 
-  //     isGroup: false, 
-  //     time: "12:30", 
-  //     currentMessage: "Hope say you don reach office"
-    
-  //   ),
-
-  //   ChatModel(
-  //     name: "Mr Promise", 
-  //     icon: "person.svg", 
-  //     isGroup: false, 
-  //     time: "11:23", 
-  //     currentMessage: "Push to the repo now"
-    
-  //   ),
-
-  //   ChatModel(
-  //     name: "Netflix Nigeria", 
-  //     icon: "group.svg", 
-  //     isGroup: true, 
-  //     time: "4:17", 
-  //     currentMessage: "Hope yall have eaten"
-      
-  //     ),
-
-  //   ChatModel(
-  //     name: "Emma Igbin", 
-  //     icon: "person.svg", 
-  //     isGroup: false, 
-  //     time: "7:12", 
-  //     currentMessage: "Haffa I have your done your animations"
-      
-  //     ),
-
-  //     ChatModel(
-  //       name: "Google for all nations", 
-  //       icon: "group.svg", 
-  //       isGroup: true, 
-  //       time: "9:29", 
-  //       currentMessage: "All your salaries are ready")
-
-
-  // ];
-
   @override 
 
   Widget build(BuildContext context){
-
+      
         return Scaffold(
-
-
-                body: Column(
-                  children: [
-
-
-
-                    Expanded(
-            child: ListView.builder(
-              // controller: _scrollController,
-              shrinkWrap: true,
-              itemCount:  widget.chatModels.length,
-              
-              // usersList.length,
-              
-              itemBuilder: (context, index)=>Padding(
-                padding: const EdgeInsets.only(left: 4, right:4, top:1, bottom:1),
-                child: Container(
-                  margin: EdgeInsets.all(5),
+                  body: Column(
+                     children: [
+                      Expanded(
+                        child: ValueListenableBuilder(
+                          valueListenable: chatsBox.listenable(),
                   
-                  height: 80,
-                  width: MediaQuery.of(context).size.width,
-                  child: Column(
-                    children: [
+                          builder: (context, Box chat, _,){
+                            List<int> keys = chatsBox.keys.cast<int>().toList();
+                            keys = keys.reversed.toList();
+                            return ListView.builder(
                       
-                      Center(
-                        child: CustomCard(chatModel: widget.chatModels[index], sourceChat : widget.sourceChat)
-                        )
+                    // controller: _scrollController,
+                    
+                    shrinkWrap: true,
+                    itemCount:  keys.length, 
+                     // usersList.length,
+                     itemBuilder: (context, index){
                       
-                
+                      final int key = keys[index];
+                      final ChatModel chat = chatsBox.get(key)!;
+                      return Padding(
                       
-                    ],
-                  )
+                       padding: const EdgeInsets.only(left: 4, right:4, top:1, bottom:1),
+                       child: Container(
+                          margin: EdgeInsets.all(5),
+                          height: 80,
+                          width: MediaQuery.of(context).size.width,
+                          child: Column(
+                            children: [
+                              // Debug this place later abeg............. or this code go crash
+                              Center(
+                                child: CustomChatCard(
+                                  users: chat,
+                                  isGroup: isGroup
+                                )
+                              )       
+                            ],
+                          )
+                       ),
+                     );}
+                  );
+                  },
                 ),
               ),
-            ),
-        ),
-                  ]
-                )
+            ]
+          )
           
         );
+      
+  }
+
+  readChats()async{
+    final chatBox =  await Hive.box('chats');
+    setState(() {
+      print(chatBox.values.toList());
+       usersList.addAll(chatBox.values.toList().cast<ChatModel>());
+    print(">>>>>>>>> the users list is ${usersList}");
+    });
+   
+
   }
 }
 
-class CustomCard extends StatelessWidget{
+class CustomChatCard extends StatelessWidget{
 
-      const CustomCard({Key? key, required this.chatModel, required this.sourceChat}) : super(key: key);
-      final ChatModel chatModel;
-      final ChatModel sourceChat;
+      const CustomChatCard({Key? key,required this.users, required this.isGroup}) : super(key: key);
+      final ChatModel users;
+      final bool isGroup;
 
       @override 
       Widget build(BuildContext context){
@@ -134,18 +115,22 @@ class CustomCard extends StatelessWidget{
               onTap: (){
 
                     Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => NewChatScreen(chatModels: chatModel, sourceChat: sourceChat)
+                      builder: (context) => NewChatScreen( receiverID: users.id, receiverName: users.name)
                     ));
               },
 
               child: ListTile(
-                            leading: CircleAvatar(
+                            leading: Container(
                         
                               
-                
-                               backgroundColor: Constants().purple ,
-                
-                               child: chatModel.isGroup? Icon(Icons.people,
+                               width: 40,
+                               height: 40,
+                               decoration: BoxDecoration(
+                                  color: Constants().purple ,
+                                  borderRadius: BorderRadius.circular(15)
+                               ),
+
+                               child: isGroup? Icon(Icons.people,
                           size: 24, color: Colors.black) : 
                           
                           Icon(Icons.person,
@@ -158,13 +143,14 @@ class CustomCard extends StatelessWidget{
                               //     size: 24, color: Colors.black)
                             ),
                         
-                            title:Text(chatModel.name,
+                            title:Text(users.name,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w400,
                                   fontSize: 13,
                                 ),),
                         
-                            subtitle: Text(chatModel.currentMessage,
+                            subtitle: 
+                            Text(users.currentMessage,
                                 style: TextStyle(
                             color: Constants().unReadGrey,
                             fontWeight: FontWeight.w400,
@@ -173,7 +159,8 @@ class CustomCard extends StatelessWidget{
                         
                             trailing: Column(
                               children: [
-                                Text(chatModel.time,
+
+                                Text(users.time,
                                 style:TextStyle(
                             color: Constants().unReadGrey,
                             fontWeight: FontWeight.w400,
@@ -185,14 +172,12 @@ class CustomCard extends StatelessWidget{
                                 )
                                 ,
                                 CircleAvatar(
-                                
-                                                  radius:10,
-                                                  backgroundColor: Constants().unReadGrey ,
-                                
-                                                  child: Text("1", style: TextStyle(
-                                                    color: Color(0xFF001A83)
-                                                  ))
-                                  ),
+                                  radius:10,
+                                  backgroundColor: Constants().unReadGrey ,
+                                  child: Text("1", 
+                                    style: TextStyle(color: Color(0xFF001A83))
+                                  )
+                                ),
                               ],
                             )
                             ) ,
