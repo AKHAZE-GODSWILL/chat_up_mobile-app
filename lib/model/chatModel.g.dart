@@ -20,16 +20,20 @@ class ChatModelAdapter extends TypeAdapter<ChatModel> {
       id: fields[0] as String,
       name: fields[1] as String,
       icon: fields[2] as String,
-      isGroup: fields[3] as bool,
-      time: fields[4] as String,
-      currentMessage: fields[5] as String,
+      img: fields[3] as String,
+      isGroup: fields[4] as bool,
+      time: fields[5] as String,
+      currentMessage: fields[6] as String,
+      unReadMsgCount: fields[7] as int,
+      seen: fields[8] as bool,
+      isOnline: fields[9] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, ChatModel obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -37,11 +41,19 @@ class ChatModelAdapter extends TypeAdapter<ChatModel> {
       ..writeByte(2)
       ..write(obj.icon)
       ..writeByte(3)
-      ..write(obj.isGroup)
+      ..write(obj.img)
       ..writeByte(4)
-      ..write(obj.time)
+      ..write(obj.isGroup)
       ..writeByte(5)
-      ..write(obj.currentMessage);
+      ..write(obj.time)
+      ..writeByte(6)
+      ..write(obj.currentMessage)
+      ..writeByte(7)
+      ..write(obj.unReadMsgCount)
+      ..writeByte(8)
+      ..write(obj.seen)
+      ..writeByte(9)
+      ..write(obj.isOnline);
   }
 
   @override

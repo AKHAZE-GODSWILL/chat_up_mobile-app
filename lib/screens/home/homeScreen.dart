@@ -1,4 +1,5 @@
 
+import 'package:chat_up/main.dart';
 import 'package:chat_up/model/chatModel.dart';
 import 'package:chat_up/screens/inbox/newChatScreen.dart';
 import 'package:chat_up/utils/constants.dart';
@@ -7,7 +8,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 class HomeScreen extends StatefulWidget{
 
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({Key? key, required this.sendMessageToSocket}) : super(key: key);
+  final Function sendMessageToSocket;
   State<HomeScreen> createState()=> _HomeScreen();
 }
 
@@ -70,8 +72,9 @@ class _HomeScreen extends State<HomeScreen>{
                               // Debug this place later abeg............. or this code go crash
                               Center(
                                 child: CustomChatCard(
-                                  users: chat,
-                                  isGroup: isGroup
+                                  user: chat,
+                                  isGroup: isGroup,
+                                  sendMessageToSocket: widget.sendMessageToSocket
                                 )
                               )       
                             ],
@@ -103,8 +106,9 @@ class _HomeScreen extends State<HomeScreen>{
 
 class CustomChatCard extends StatelessWidget{
 
-      const CustomChatCard({Key? key,required this.users, required this.isGroup}) : super(key: key);
-      final ChatModel users;
+      const CustomChatCard({Key? key,required this.user, required this.isGroup, required this.sendMessageToSocket}) : super(key: key);
+      final Function sendMessageToSocket;
+      final ChatModel user;
       final bool isGroup;
 
       @override 
@@ -113,56 +117,79 @@ class CustomChatCard extends StatelessWidget{
           return InkWell(
 
               onTap: (){
-
                     Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => NewChatScreen( receiverID: users.id, receiverName: users.name)
+                      builder: (context) => NewChatScreen( receiverID: user.id, receiverName: user.name, sendMessageToSocket: sendMessageToSocket, user: user )
                     ));
               },
 
               child: ListTile(
                             leading: Container(
-                        
-                              
-                               width: 40,
-                               height: 40,
-                               decoration: BoxDecoration(
-                                  color: Constants().purple ,
-                                  borderRadius: BorderRadius.circular(15)
-                               ),
 
-                               child: isGroup? Icon(Icons.people,
-                          size: 24, color: Colors.black) : 
-                          
-                          Icon(Icons.person,
-                          size: 24, color: Colors.black) ,
-                        
-                              // backgroundImage: NetworkImage("${usersList[index]["img_url"]}"),
-                
-                        
-                              // child: Icon(Icons.person,
-                              //     size: 24, color: Colors.black)
+                              width: 52,
+                              height: 52,
+                              child: Stack(
+                                children:[
+                                   Center(
+                                     child: Container(
+                                                        
+                                  
+                                     width: 48,
+                                     height: 48,
+                                     decoration: BoxDecoration(
+                                        color: Constants().purple ,
+                                        borderRadius: BorderRadius.circular(15)
+                                     ),
+                                                            
+                                     child: isGroup? Icon(Icons.people,
+                                                          size: 24, color: Colors.black) : 
+                                                          
+                                                          Icon(Icons.person,
+                                                          size: 24, color: Colors.black) ,
+                                                        
+                                  // backgroundImage: NetworkImage("${usersList[index]["img_url"]}"),
+                                                
+                                                        
+                                  // child: Icon(Icons.person,
+                                  //     size: 24, color: Colors.black)
+                                ),
+                                   ),
+
+                                Positioned(
+                                  top: 0,
+                                  right:0,
+                                  child: CircleAvatar(
+                                    radius: 7.3,
+                                    backgroundColor: Colors.white,
+                                    child: CircleAvatar(
+                                      radius: 5,
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  ),
+                                )
+                                ]
+                              ),
                             ),
                         
-                            title:Text(users.name,
+                            title:Text(user.name,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w400,
                                   fontSize: 13,
                                 ),),
                         
                             subtitle: 
-                            Text(users.currentMessage,
+                            Text(user.currentMessage,
                                 style: TextStyle(
-                            color: Constants().unReadGrey,
-                            fontWeight: FontWeight.w400,
+                            color: user.seen == true? constants.readGrey: constants.unRead ,
+                            fontWeight: user.seen == true?FontWeight.w400: FontWeight.w700,
                             fontSize: 13,
                                 ),),
                         
                             trailing: Column(
                               children: [
 
-                                Text(users.time,
+                                Text(user.time,
                                 style:TextStyle(
-                            color: Constants().unReadGrey,
+                            color: constants.unRead,
                             fontWeight: FontWeight.w400,
                             fontSize: 10,
                                 ),
@@ -171,13 +198,14 @@ class CustomChatCard extends StatelessWidget{
                                   height: 10,
                                 )
                                 ,
+                                user.seen == false?
                                 CircleAvatar(
                                   radius:10,
-                                  backgroundColor: Constants().unReadGrey ,
-                                  child: Text("1", 
-                                    style: TextStyle(color: Color(0xFF001A83))
+                                  backgroundColor: constants.unRead ,
+                                  child: Text("${user.unReadMsgCount}", 
+                                    style: TextStyle(color: Colors.white)
                                   )
-                                ),
+                                ):SizedBox(),
                               ],
                             )
                             ) ,
