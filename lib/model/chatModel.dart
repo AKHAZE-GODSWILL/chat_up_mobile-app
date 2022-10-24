@@ -16,13 +16,26 @@ part 'chatModel.g.dart';
         String icon;
 
         @HiveField(3)
-        bool isGroup;
+        String img;
 
         @HiveField(4)
-        String time;
+        bool isGroup;
 
         @HiveField(5)
+        String time;
+
+        @HiveField(6)
         String currentMessage;
+
+        @HiveField(7)
+        int unReadMsgCount = 0;
+
+        @HiveField(8)
+        bool seen = false;
+
+        @HiveField(9)
+        bool isOnline = false;
+
 
         
         
@@ -31,7 +44,11 @@ part 'chatModel.g.dart';
                    required this.id,
                    required this.name,
                    required this.icon,
+                   required this.img,
                    required this.isGroup,
                    required this.time,
-                   required this.currentMessage,});
+                   required this.currentMessage,
+                   required this.unReadMsgCount,
+                   required this.seen,
+                   required this.isOnline});
       }

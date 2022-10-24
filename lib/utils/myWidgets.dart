@@ -151,7 +151,7 @@ class MyWidgets {
             children: [
               Padding(
                 padding: const EdgeInsets.only(left: 45, right: 10, top: 10, bottom: 25),
-                child: Text(message, 
+                child: Text(message.message, 
                 
                 style: TextStyle(
                               color: Colors.white,
@@ -167,7 +167,7 @@ class MyWidgets {
                 children: [
                   
                     
-                    Text("10:10",
+                    Text("${message.time}",
             
                           style: TextStyle(
                               color: Colors.white,
@@ -219,7 +219,7 @@ class MyWidgets {
             children: [
               Padding(
                 padding: const EdgeInsets.only(left: 10, right: 45, top: 10, bottom: 25),
-                child: Text(message, 
+                child: Text("${message.message}", 
                 
                 style: TextStyle(
                               color: Constants().purple,
@@ -235,7 +235,7 @@ class MyWidgets {
                 children: [
                   
                     
-                    Text("10:10",
+                    Text("${message.time}",
             
                           style: TextStyle(
                               color: Constants().purple,
@@ -307,7 +307,7 @@ class MyWidgets {
                 
                 
             
-                message != null? Text("$message",
+                message != null? Text("${message.message}",
                     style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w400,
@@ -372,7 +372,7 @@ class MyWidgets {
                 
                 
             
-                message != null? Text("$message",
+                message != null? Text("${message.message}",
                     style: TextStyle(
                             color: constants.purple,
                             fontWeight: FontWeight.w400,

@@ -1,6 +1,7 @@
 
 import 'dart:io';
 
+import 'package:chat_up/model/chatModel.dart';
 import 'package:chat_up/screens/inbox/newChatScreen.dart';
 import 'package:chat_up/utils/api_requests.dart';
 import 'package:chat_up/utils/constants.dart';
@@ -9,7 +10,8 @@ import 'package:hive/hive.dart';
 
 class FindFriends extends StatefulWidget{
 
-  const FindFriends({Key? key}) : super(key: key);
+  const FindFriends({Key? key, required this.sendMessageToSocket}) : super(key: key);
+  final Function sendMessageToSocket;
   State<FindFriends> createState()=> _FindFriends();
 }
 
@@ -41,20 +43,23 @@ class _FindFriends extends State<FindFriends>{
   }
 
   loadUsersFromLocalDataBase() {
+    usersList.clear();
     print("We are in the loading users from database method");
     final contactBox =  Hive.box('contacts');
+    
+    
     var contacts = contactBox.toMap().values.toList();
     print('local database data is${contactBox.values.toList()}');
     if(contacts.isEmpty){   
       setState((){
+        
         loadingState = 2;
-        usersList.add('empty');
       });
     }
     else{
+      print("The else statement in the loadusers from database ran and I cleared the list here ");
       setState((){
         loadingState = 1;
-        usersList.clear();
         usersList = contacts;
        });
     }
@@ -66,18 +71,12 @@ class _FindFriends extends State<FindFriends>{
     viewAllUsers().then((response) {
       if (response['msg'] == "success") {
        
-       print(response['allUsers']);       
+       print(">>>>>>>>>>>>> The server response comes in here ${response['allUsers']}");     
         print('>>>>>>>>>>>>>>> ${response['allUsers'].length}');
+
         addContacts(response['allUsers']);
         loadUsersFromLocalDataBase();
         
-        setState(() {
-          
-          print('>>>>>>>>>>>>>>> my set state ran successfully... meaning the problem is not here');
-          searchController.text = '';
-          // clear all previous users in the local database before adding fresh sets
-          //>>>>>>>>>>> change this place later. Setting it to false just for the purose of testing
-        });
       } else {
         loadingState = 4;
       }
@@ -91,6 +90,7 @@ class _FindFriends extends State<FindFriends>{
         loadingState = 3;
         loadUsersFromLocalDataBase();
       } else {
+        usersList.clear();
         loadingState = 4;
       }
       // setState(() {
@@ -102,10 +102,10 @@ class _FindFriends extends State<FindFriends>{
   //>>>>>>>>>>>> come back to this place later abeg. I don tire
   // make sure you comeback abeg
 
-  Future addContacts(List contacts) async{
+   addContacts(List contacts) async{
     final contactBox = Hive.box('contacts');
     contactBox.clear();
-    
+    print(">>>>>>>>>>>>>> the contact box got cleared successfully and there is nothing in the database");
     for(var d in contacts){
       contactBox.add(d);
     }
@@ -236,7 +236,7 @@ class _FindFriends extends State<FindFriends>{
                         child: Column(
                           children: [                 
                             // Debug this place later abeg............. or this code go crash
-                            Center(child: CustomCard(users: usersList[index], isGroup: isGroup))  
+                            Center(child: CustomCard(users: usersList[index], isGroup: isGroup, sendMessageToSocket: widget.sendMessageToSocket))  
                           ],
                         )
                       ),
@@ -254,9 +254,10 @@ class _FindFriends extends State<FindFriends>{
 
 class CustomCard extends StatelessWidget{
 
-      const CustomCard({Key? key,required this.users, required this.isGroup}) : super(key: key);
+      const CustomCard({Key? key,required this.users, required this.isGroup, required this.sendMessageToSocket}) : super(key: key);
       final Map<dynamic,dynamic> users;
       final bool isGroup;
+      final Function sendMessageToSocket;
 
       @override 
       Widget build(BuildContext context){
@@ -265,32 +266,63 @@ class CustomCard extends StatelessWidget{
 
               onTap: (){
 
+                    ChatModel user = ChatModel(id: "",
+                     name: "",
+                     icon: "",
+                     img: "",
+                     isGroup: isGroup,
+                     time: "", 
+                     currentMessage: "",
+                     unReadMsgCount: 0,
+                     seen: false, 
+                     isOnline: false);
+
                     Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => NewChatScreen( receiverID: users['_id'], receiverName: users['fullname'])
+                      builder: (context) => NewChatScreen( receiverID: users['_id'], receiverName: users['fullname'], sendMessageToSocket: sendMessageToSocket, user: user)
                     ));
               },
 
               child: ListTile(
                             leading: Container(
-                        
-                              
-                               width: 40,
-                               height: 40,
-                               decoration: BoxDecoration(
-                                  color: Constants().purple ,
-                                  borderRadius: BorderRadius.circular(15)
-                               ),
-                               
-                
-                               child: isGroup? Icon(Icons.people,
-                                  size: 24, color: Colors.black) : 
-                          
-                                Icon(Icons.person,
-                                   size: 24, color: Colors.black) ,
-                        
-                              // backgroundImage: NetworkImage("${usersList[index]["img_url"]}"),
-                              // child: Icon(Icons.person,
-                              //     size: 24, color: Colors.black)
+
+                              child: Stack(
+                                children:[
+                                   Container(
+                                                      
+                                  
+                                   width: 48,
+                                   height: 48,
+                                   decoration: BoxDecoration(
+                                      color: Constants().purple ,
+                                      borderRadius: BorderRadius.circular(15)
+                                   ),
+                                                          
+                                   child: isGroup? Icon(Icons.people,
+                                                        size: 24, color: Colors.black) : 
+                                                        
+                                                        Icon(Icons.person,
+                                                        size: 24, color: Colors.black) ,
+                                                      
+                                  // backgroundImage: NetworkImage("${usersList[index]["img_url"]}"),
+                                              
+                                                      
+                                  // child: Icon(Icons.person,
+                                  //     size: 24, color: Colors.black)
+                                ),
+
+                                // Positioned(
+                                //   right:0,
+                                //   child: CircleAvatar(
+                                //     radius: 8,
+                                //     backgroundColor: Colors.white,
+                                //     child: CircleAvatar(
+                                //       radius: 5,
+                                //       backgroundColor: Colors.green,
+                                //     ),
+                                //   ),
+                                // )
+                                ]
+                              ),
                             ),
                         
                             title:Text(users['fullname'],

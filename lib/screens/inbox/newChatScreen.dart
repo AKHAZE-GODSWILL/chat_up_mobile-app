@@ -1,13 +1,23 @@
+// In this page, the set message is setting the message to the array in the get controller
+// and obs is used there so that a new message enters the array,the UI rebuilds
+// so, the array needs to be cleaned or initialized to empty when we want to chat with a new user
+// so, the read message from database, messages are read to 
+// the array at the get controller page
+
+
+///////// check the read chats method and try and fix what ever breaking changes which might occur
+
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:chat_up/controller/chatController.dart';
 import 'package:chat_up/main.dart';
 import 'package:chat_up/model/chatModel.dart';
 import 'package:chat_up/model/messageModel.dart';
 import 'package:chat_up/screens/inbox/cameraView.dart';
+import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:chat_up/utils/constants.dart';
 import 'package:chat_up/utils/myWidgets.dart';
 import 'package:flutter/material.dart';
@@ -22,19 +32,22 @@ TextEditingController _controller = new TextEditingController();
 
 class NewChatScreen extends StatefulWidget {
   const NewChatScreen(
-      {Key? key, required this.receiverName, required this.receiverID})
+      {Key? key, required this.receiverName, required this.receiverID, required this.user, required this.sendMessageToSocket})
       : super(key: key);
   final String receiverName;
   final String receiverID;
+  final ChatModel user;
+  final Function sendMessageToSocket;
   State<NewChatScreen> createState() => _NewChatScreen();
 }
 
 class _NewChatScreen extends State<NewChatScreen> {
+   final ChatController chatController = Get.put(ChatController());
+
   String senderID = getX.read(constants.GETX_USER_ID);
+  String fullname = getX.read(constants.GETX_FULLNAME);
   bool show = false;
-  late IO.Socket socket;
   FocusNode focusNode = FocusNode();
-  List<MessageModel> messages = [];
   List<ChatModel> usersList = [];
   ScrollController _scrollController = ScrollController();
   String imgPath = "";
@@ -85,83 +98,41 @@ class _NewChatScreen extends State<NewChatScreen> {
   @override
   void initState() {
     readMsgs();
-    readChats();
     super.initState();
-    connect();
   }
 
+
+  //////>>>>>>>>>>>> take note of the changes made here abeg
   readMsgs() {
     final messageBox = Hive.box('messages');
-    messages.addAll(messageBox.values
+    //////>>>>>>>>>>>>>>>> the message are read into the one at the get controller. Take note of it abeg
+    // chatController.messages.clear();
+    // chatController.messages.addAll();
+    chatController.showMsgFromDB(newMsg: messageBox.values
         .toList()
         .where((element) => element.conversationId == widget.receiverID)
         .cast<MessageModel>());
-    print(messages);
-  }
-
-  readChats() {
-    final chatBox = Hive.box('chats');
-    usersList.addAll(chatBox.values.toList().cast<ChatModel>());
-  }
-
-  void connect() {
-    //https://chatup-node-deploy.herokuapp.com/
-    socket =
-        IO.io("https://chatup-node-deploy.herokuapp.com/", <String, dynamic>{
-      "transports": ["websocket"],
-      "autoConnect":
-          false // Sometimes, the code might fail to connect automatically , so you have to make it false
-    });
-
-    socket.connect(); // this piece of code connects the socket manually
-
-    // Always emit after the connection
-    socket.emit("signin",
-        senderID); // This piece of code is used to send a message from the front end to the backend
-    // You have to create an event first and then a message in this case ,
-    // the event is /test and the message is hello world
-    // after creating the event, youn have to go to the backend and listen for the event
-
-    // prints connected if the connection is successful
-    // onConnect listens for msgs comming from the API
-    socket.onConnect((data) {
-      print("Connected");
-
-      socket.on("message", (msg) {
-        print(msg);
-
-        // This code puts the incoming message in a list
-        // The list is structured in a model which contains type and destination
-        // If it receives a message, the setMessage function sets type as destination
-
-        setMessage(widget.receiverID, "destination", msg["message"],
-            msg["imagePath"]); //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> check this place later
-
-        setChatModel(widget.receiverID, widget.receiverName, "icons.person",
-            false, msg["message"]);
-
-        _scrollController.animateTo(_scrollController.position.maxScrollExtent,
-            duration: Duration(milliseconds: 300), curve: Curves.easeOut);
-      });
-    });
-
-    print(socket
-        .connected); // this piece of code helps check if your client side socket is connected
-    // to the server or not. It returns a bool value
+    print(chatController.messages);
   }
 
   void sendMessage(String message, sourceId, targetId, String imagePath) {
     // The send message function adds the messages to the list and also sends them through the socket
     // on calling the sendMessage method, the setMessage function sets the type of the message to be
     // Source before saving in the list
+    print(">>>>> source id is ${sourceId}");
+    print(">>>>> source id is ${targetId}");
+    print(">>>>> source id is ${widget.receiverID}");
     setMessage(widget.receiverID, "source", message, imagePath);
+
     // I first of all send through the event name message before sending an object that actually had the message
-    socket.emit("message", {
-      "message": message,
-      "sourceId": sourceId,
-      "targetId": targetId,
-      "imagePath": imagePath
-    });
+    widget.sendMessageToSocket(
+      message,
+      sourceId,
+      targetId,
+      fullname,
+      imagePath
+    );
+
     setChatModel(
         widget.receiverID, widget.receiverName, "icons.person", false, message);
   }
@@ -176,11 +147,18 @@ class _NewChatScreen extends State<NewChatScreen> {
         imagePath: imagePath,
         time: DateTime.now().toString().substring(10, 16));
 
-    setState(() {
-      messages.add(messagesModel);
+    //////////////// >>>>>>>>>>>>>> take note to the changes made here abeg
+    
+
+      //////////// >>>> This message is set to the array at get contoller page instead
+      chatController.updateMessages(newMsg: messagesModel);
+      // setState(() {
+      //   chatController.messages.add(messagesModel);
+      // });
+      print(">>>>>>>>>>>>> The getX message model that i just printed ${chatController.messages}");
       // adding the message to the local database
       addMsg(messagesModel);
-    });
+    
   }
 
   void onSendImage(String imgPath, String message) async {
@@ -203,56 +181,86 @@ class _NewChatScreen extends State<NewChatScreen> {
     print(data['path']);
     print(response.statusCode);
 
-    // I first of all send through the event name message before sending an object that actually had the message
-    socket.emit("message", {
-      "message": message,
-      "sourceId": senderID,
-      "targetId": widget.receiverID,
-      "imagePath": data['path']
-    });
+
+    widget.sendMessageToSocket(
+      message,
+      senderID,
+      widget.receiverID,
+      data['path']
+    );
+  
   }
 
-  addMsg(MessageModel message) {
+  addMsg(MessageModel message) { 
     final messageBox = Hive.box('messages');
     messageBox.add(message);
   }
 
+  // I made changes to all the chat Model Schema 
   setChatModel(id, name, icon, isGroup, currentMessage) {
     ChatModel chatModel = ChatModel(
         id: id,
         name: name,
         icon: icon,
+        img: "",
         isGroup: isGroup,
         time: DateTime.now().toString().substring(10, 16),
-        currentMessage: currentMessage);
+        currentMessage: currentMessage,
+        unReadMsgCount: 0,
+        seen: true,
+        isOnline: false);
     addChat(chatModel);
   }
 
   addChat(ChatModel chat) {
-    final chatBox = Hive.box('chats');
-    // chatBox.add(chat);
-    usersList.addAll(chatBox.values.toList().cast<ChatModel>());
-    print("this is userList>>>>>>>> ${usersList}");
 
-    usersList.indexWhere((element) => element.id == widget.receiverID);
-    if (usersList.indexWhere((element) => element.id == widget.receiverID) ==
-        -1) {
-      usersList.add(chat);
+    print('>>>>>>>>>>>>>>>>>>>>>>>>>add chat model ran successfully');
+    // this code is written to ensure that the model coming from the "find friends" screen is ignored as it is useless
+    // There is already a check to find out if a user was not present before
+    
+
+    
+    
+
+
+    
+    final chatBox = Hive.box('chats');
+    
+    // This code adds all the users from the data base into an array
+    usersList.clear();
+    usersList.addAll(chatBox.values.toList().cast<ChatModel>());
+    print(">>>>>>>>>>>>>>> the userList is ${usersList}");
+       if(usersList.isNotEmpty){
+
+        print('>>>>>>>>>>>>>>>>>>>>>>>>>the first if statement in the add chat ran to check if usersList is not empty');   
+        print("this is userList>>>>>>>> ${usersList[0].currentMessage}");
+
+          // Here, a search is done to check if a particular user is in the list and the index is saved in user key
+  var userKey = usersList.indexWhere((element) => element.id == widget.receiverID);
+    if (userKey == -1) {
+
+      // if user is not found on the list , his info is freshly added to the database
       chatBox.add(chat);
       print("The if block ran");
     } else {
-      // usersList[usersList.indexWhere((element) => element.id == widget.receiverID)] = chat;
-      chatBox.deleteAt(
-          usersList.indexWhere((element) => element.id == widget.receiverID));
+      // if user is found on the list, his info is updated on the database
+      chatBox.deleteAt(userKey);
+      print(">>>>>>>>>>>>> the updated model current message ${chat.currentMessage}");
       chatBox.add(chat);
-      // chatBox.clear();
-      // chatBox.addAll(usersList);
       print("The else block ran");
     }
-    // usersList[usersList.indexWhere((element) => element.id == widget.receiverID)] = chat;
     print(
         "this is after the finding and the updating userList>>>>>>>> ${usersList[0].currentMessage}");
-    // chatBox.addAll(usersList);
+      // chatBox.addAll(usersList);
+
+
+       }
+
+        else{
+        chatBox.add(chat);
+        }
+    
+    
   }
 
   @override
@@ -271,36 +279,62 @@ class _NewChatScreen extends State<NewChatScreen> {
           children: [
             SizedBox(height: 20),
             Expanded(
-              child: ListView.builder(
+              
+              // found out that its best to use the GetBuilder if you want your UI to keep rebuilding
+              // For some reason, the obs does not work. It saves the data but does not rebuild
+              child: GetBuilder<ChatController>(
+                builder: (_){
+
+                  // Sets the Message model on the other screen 
+                  //this part ensures that I have seen the message 
+                  if(chatController.messages.length != 0){
+
+                    print("the get builder if statement ran");
+                    print(">>>>>>>>>>>>> the chat controller message number is ${chatController.messages.length}");
+                      setChatModel(
+                    widget.receiverID, 
+                    widget.receiverName,
+                    "",
+                    false,
+                    chatController.messages[chatController.messages.length-1].message);
+                  }
+                  
+                  // addChat(widget.user);
+                  return ListView.builder(
                 controller: _scrollController,
                 shrinkWrap: true,
-                itemCount: messages.length + 1,
+                itemCount: chatController.messages.length ,
                 itemBuilder: (context, index) {
-                  if (index == messages.length) {
+                  var currentItem = chatController.messages[index];
+
+                  if (currentItem == chatController.messages.length) {
                     return Container(
                       height: 70,
                     );
                   }
 
-                  if (messages[index].type == "source") {
-                    if (messages[index].imagePath.isNotEmpty) {
+                  if (currentItem.type == "source") {
+                    if (currentItem.imagePath.isNotEmpty) {
                       return MyWidgets().ownPictureCard(context,
-                          messages[index].imagePath, messages[index].message);
+                          currentItem.imagePath, currentItem);
                     }
 
                     return MyWidgets().ownMessageCard(
-                        context: context, message: messages[index].message);
+                        context: context, message: currentItem);
                   } else {
-                    if (messages[index].imagePath.isNotEmpty) {
+                    if (currentItem.imagePath.isNotEmpty) {
                       return MyWidgets().replyPictureCard(context,
-                          messages[index].imagePath, messages[index].message);
+                          currentItem.imagePath, currentItem);
                     }
 
                     return MyWidgets().replyCard(
-                        context: context, message: messages[index].message);
+                        context: context, message:currentItem);
                   }
                 },
-              ),
+              );
+                }
+              )
+                
             ),
             Align(
                 alignment: Alignment.bottomCenter,
@@ -342,7 +376,7 @@ class _NewChatScreen extends State<NewChatScreen> {
                                 ))),
                         IconButton(
                           // handles the action performed anytime you press the send button
-                          onPressed: () {
+                          onPressed: () { 
                             if (_controller.text != "") {
                               FocusScope.of(context).unfocus();
                               _scrollController.animateTo(

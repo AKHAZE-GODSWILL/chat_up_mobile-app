@@ -292,6 +292,7 @@ class _Login extends State<Login>{
 
         /////////// change this place before you move forward
         getX.write(constants.GETX_TOKEN, decodedResponse["user"]["token"]);
+        getX.write(constants.GETX_FULLNAME, decodedResponse["user"]["fullname"]);
         getX.write(constants.GETX_IS_LOGGED_IN, "true");
         getX.write(constants.GETX_USER_ID, decodedResponse["user"]["_id"]);
 

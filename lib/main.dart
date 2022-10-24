@@ -14,25 +14,19 @@ import 'package:path_provider/path_provider.dart' as path_provider;
 
 ////// Phase 1
 /// I need to fix the unresponsive problem of the onBoarding screeens
-/// Need to fix the fact that trying to use the keyboard to login makes your UI bad
-/// and Unresponsive,
-/// also, need to fix the Saving to getX and also retrieving from GetX
-/// also, I need to find a way to have one socket control the chatScreen and the home
-/// screen
 /// Also, I need to fix the online and the offline problem, to know when you are
 /// offline, 
 /// Also need to fix the unsent messages problem and the unreceived messages problem
-/// I have the figure out the best way to arrange the schema of the chats and
 /// also the best way to render the chats using the timestamp gotten from the server
-/// I also have to add the send image feature so that I can implement the 
 /// Status viewer feature, and also should be able to implement the podcast feature and
 /// the voice over feature over your own texts
-/// Also implement the audio recording on your status and the content management system 
-/// in the app.
-/// On the newChat screen, find out why I was able to pass a fuction without parenthensis to another page
+/// Also implement the audio recording on your status and the content management system in the app.
 /// Check the function of the streamed response and the toSubString in dart
 /// Find out the reason why the print statement has not been working since, but the end point is firing
 /// If there is no data, the sent image does not even display on the senders screen. I fix that bug
+
+/// I need to work on the Text area to keep increasing anytime more texts enter
+/// I need to find a way to make all the texts not enter the Home screen after some place their should be elipses
 Constants constants = Constants();
 final getX = GetStorage();
 final myWidgets = MyWidgets();
