@@ -5,8 +5,6 @@
 // the array at the get controller page
 
 
-///////// check the read chats method and try and fix what ever breaking changes which might occur
-
 import 'dart:convert';
 import 'dart:io';
 
@@ -244,9 +242,11 @@ class _NewChatScreen extends State<NewChatScreen> {
       print("The if block ran");
     } else {
       // if user is found on the list, his info is updated on the database
-      chatBox.deleteAt(userKey);
+      ChatModel chat = chatBox.getAt(userKey);
+      chat.unReadMsgCount = 0;
+      chat.seen = true;
       print(">>>>>>>>>>>>> the updated model current message ${chat.currentMessage}");
-      chatBox.add(chat);
+      chatBox.putAt(userKey,chat);
       print("The else block ran");
     }
     print(

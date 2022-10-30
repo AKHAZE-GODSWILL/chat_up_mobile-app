@@ -2,7 +2,9 @@
 import 'package:chat_up/main.dart';
 import 'package:chat_up/model/chatModel.dart';
 import 'package:chat_up/screens/inbox/newChatScreen.dart';
+import 'package:chat_up/screens/inbox/stories.dart';
 import 'package:chat_up/utils/constants.dart';
+import 'package:chat_up/utils/data.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -40,8 +42,127 @@ class _HomeScreen extends State<HomeScreen>{
   Widget build(BuildContext context){
       
         return Scaffold(
+            backgroundColor: Colors.white,
+                  appBar: AppBar(
+                    backgroundColor: Colors.white,
+                    elevation: 0,
+                    title: Text("Chats",
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.black)),
+                    actions: [
+            IconButton(onPressed: (){},
+             icon: Icon(
+              Icons.chat,
+              size: 27,
+              color: Colors.grey,
+             )),
+
+             IconButton(onPressed: (){},
+             icon: Icon(
+              Icons.list,
+              size: 27,
+              color: Colors.grey,
+             )),]
+                  ),
                   body: Column(
+                    
                      children: [
+                      Container(
+                        margin: EdgeInsets.only(
+                          left: 16,
+                          top: 10,
+                          bottom:40
+                          
+                        ),
+                        width: MediaQuery.of(context).size.width,
+                        height: 70,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: 4,
+                                itemBuilder: (context, index) {
+                                  ChatModel oneUser = chatsBox.getAt(0);
+                                  return index == 0? Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: GestureDetector(
+                                      onTap: (){},
+                                      child: Container(
+
+                                      width: 52,
+                                      height: 52,
+                                      child: Center(
+                                        child: Container(
+                                                           
+                                          
+                                        width: 48,
+                                        height: 48,
+                                        decoration: BoxDecoration(
+                                           color: Colors.grey ,
+                                           borderRadius: BorderRadius.circular(15)
+                                        ),
+                                                               
+                                        child:Icon(Icons.add,
+                                                  size: 24, color: Colors.black) ,
+                                                           
+                                          // backgroundImage: NetworkImage("${usersList[index]["img_url"]}"),
+                                                   
+                                                           
+                                          // child: Icon(Icons.person,
+                                          //     size: 24, color: Colors.black)
+                                        ),
+                                      ),
+                                    ),
+                                    ),
+                                  ):Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: GestureDetector(
+                                      onTap: (){
+                                        Navigator.push(context,
+                                          MaterialPageRoute(builder: ((context) => Stories(storyItems: stories))
+                                          )
+                                        );
+                                      },
+                                      child: Container(
+
+                                      width: 52,
+                                      height: 52,
+                                      child: Center(
+                                        child: Container(
+                                                           
+                                          
+                                        width: 48,
+                                        height: 48,
+                                        decoration: BoxDecoration(
+                                           color: Constants().purple ,
+                                           borderRadius: BorderRadius.circular(15)
+                                        ),
+                                                               
+                                        child: isGroup? Icon(Icons.people,
+                                                             size: 24, color: Colors.black) : 
+                                                             
+                                                             Icon(Icons.person,
+                                                             size: 24, color: Colors.black) ,
+                                                           
+                                          // backgroundImage: NetworkImage("${usersList[index]["img_url"]}"),
+                                                   
+                                                           
+                                          // child: Icon(Icons.person,
+                                          //     size: 24, color: Colors.black)
+                                        ),
+                                      ),
+                                    ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
                       Expanded(
                         child: ValueListenableBuilder(
                           valueListenable: chatsBox.listenable(),
@@ -154,7 +275,7 @@ class CustomChatCard extends StatelessWidget{
                                 ),
                                    ),
 
-                                Positioned(
+                               user.isOnline? Positioned(
                                   top: 0,
                                   right:0,
                                   child: CircleAvatar(
@@ -165,7 +286,7 @@ class CustomChatCard extends StatelessWidget{
                                       backgroundColor: Colors.green,
                                     ),
                                   ),
-                                )
+                                ): SizedBox()
                                 ]
                               ),
                             ),

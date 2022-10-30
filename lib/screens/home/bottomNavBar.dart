@@ -55,7 +55,7 @@ class _BottomNavBar extends State<BottomNavBar>{
 
     void connect() {
     //https://chatup-node-deploy.herokuapp.com/
-    
+    //"https://chatup-node-deploy.herokuapp.com/"
        socket = IO.io("https://chatup-node-deploy.herokuapp.com/", <String, dynamic>{
       "transports": ["websocket"],
       "autoConnect":
@@ -77,14 +77,33 @@ class _BottomNavBar extends State<BottomNavBar>{
       print("Connected");
 
       // This one is for when you come online for the first time
-      socket.on("online", (data) {
+      socket.on("onlineUsers", (data) {
         // receives a list of all the people that are online and sets the local database to true
         // For all the found people 
+        
+        print(">>>>>>>>>These are all the data gotten from the socket ${data}");
+        // List<String> keys = data.keys.toList();
+
+        data.forEach((item){
+          // search for one the elements
+          // search for the key of that element
+          // update the fields of that element
+          // replace file into the exact spot where you took it from using its key
+          addOnlineStatus(item);
+          print(item);
+          
+        });
+
       });
 
-      // emits your id to be sent to every one that you are online
-      // This one is for when other people come online when you are online
-      socket.emit("online", senderID);
+      socket.on("offlineUser",(data){
+        print(data);
+        removeOfflineUser(data);
+      });
+
+      // // emits your id to be sent to every one that you are online
+      // // This one is for when other people come online when you are online
+      // socket.emit("online", senderID);
 
       socket.on("message", (msg) {
         print(msg);
@@ -110,6 +129,61 @@ class _BottomNavBar extends State<BottomNavBar>{
 
     print(socket.connected); // this piece of code helps check if your client side socket is connected
     // to the server or not. It returns a bool value
+  }
+
+
+  
+  // supposed to call this inside the set ChatModel
+  addOnlineStatus(item){
+
+    final chatBox = Hive.box('chats');
+    
+    usersList.clear();
+    usersList.addAll(chatBox.values.toList().cast<ChatModel>());
+          if(usersList.isNotEmpty){
+            var userKey = usersList.indexWhere((element) => element.id == item['id']);
+            if(userKey == -1){
+              print("The if -1 block ran and you have no chat with this guy yet");
+
+            }else{
+              print("The else block ran. Online status set successfully");
+              ChatModel onlineUser = chatBox.getAt(userKey);
+              onlineUser.isOnline = true;
+              chatBox.putAt(userKey, onlineUser);
+            }
+          }
+
+          else{
+
+          }
+  }
+
+  removeOfflineUser(data){
+    final chatBox = Hive.box('chats');
+    
+    usersList.clear();
+    usersList.addAll(chatBox.values.toList().cast<ChatModel>());
+    if(usersList.isNotEmpty){
+      var userKey = usersList.indexWhere((element) => element.id == data['id']);
+      if(userKey == -1){
+              print("The if -1 block ran and you have no chat with this guy yet");
+      }
+      else{
+              print("The else block ran. Online status set successfully");
+              ChatModel onlineUser = chatBox.getAt(userKey);
+              onlineUser.isOnline = false;
+              chatBox.putAt(userKey, onlineUser);
+              print("Offline status set successfully");
+            }
+    }
+    else{}
+
+  }
+  readChatsFromDB(id){
+    final chatBox = Hive.box('chats');
+   Iterable<ChatModel> onlineUser = chatBox.values
+        .where((element) => element._id == id)
+        .cast<ChatModel>();
   }
 
   void sendMessageToSocket(message,senderId,receiverId, fullname,dataPath){
