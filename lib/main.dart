@@ -3,9 +3,12 @@ import 'package:chat_up/model/chatModel.dart';
 import 'package:chat_up/model/messageModel.dart';
 import 'package:chat_up/screens/auth/onBoarding/onBoard.dart';
 import 'package:chat_up/screens/home/bottomNavBar.dart';
+import 'package:chat_up/screens/inbox/stories.dart';
 import 'package:chat_up/utils/constants.dart';
+import 'package:chat_up/utils/data.dart';
 import 'package:chat_up/utils/myWidgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart' as path_provider;
@@ -14,11 +17,9 @@ import 'package:path_provider/path_provider.dart' as path_provider;
 
 ////// Phase 1
 /// I need to fix the unresponsive problem of the onBoarding screeens
-/// Also, I need to fix the online and the offline problem, to know when you are
-/// offline, 
 /// Also need to fix the unsent messages problem and the unreceived messages problem
 /// also the best way to render the chats using the timestamp gotten from the server
-/// Status viewer feature, and also should be able to implement the podcast feature and
+// should be able to implement the podcast feature and
 /// the voice over feature over your own texts
 /// Also implement the audio recording on your status and the content management system in the app.
 /// Check the function of the streamed response and the toSubString in dart
@@ -62,6 +63,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     return MaterialApp(
       
       debugShowCheckedModeBanner: false,
@@ -74,7 +76,8 @@ class MyApp extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity
       ),
 
-      home: getX.read(constants.GETX_IS_LOGGED_IN) == "true" ? BottomNavBar() : MyOnboarding()
+//getX.read(constants.GETX_IS_LOGGED_IN) == "true" ? BottomNavBar() : MyOnboarding()
+      home:getX.read(constants.GETX_IS_LOGGED_IN) == "true" ? BottomNavBar() : MyOnboarding()
     );
   }
 }
