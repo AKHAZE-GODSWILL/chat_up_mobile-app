@@ -1,4 +1,5 @@
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_up/main.dart';
 import 'package:chat_up/model/chatModel.dart';
 import 'package:chat_up/screens/inbox/newChatScreen.dart';
@@ -44,6 +45,7 @@ class _HomeScreen extends State<HomeScreen>{
         return Scaffold(
             backgroundColor: Colors.white,
                   appBar: AppBar(
+                    automaticallyImplyLeading: false,
                     backgroundColor: Colors.white,
                     elevation: 0,
                     title: Text("Chats",
@@ -82,9 +84,9 @@ class _HomeScreen extends State<HomeScreen>{
                             Expanded(
                               child: ListView.builder(
                                 scrollDirection: Axis.horizontal,
-                                itemCount: 4,
+                                itemCount: 2,
                                 itemBuilder: (context, index) {
-                                  ChatModel oneUser = chatsBox.getAt(0);
+                                  // ChatModel oneUser = chatsBox.getAt(0);
                                   return index == 0? Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: GestureDetector(
@@ -190,7 +192,6 @@ class _HomeScreen extends State<HomeScreen>{
                           width: MediaQuery.of(context).size.width,
                           child: Column(
                             children: [
-                              // Debug this place later abeg............. or this code go crash
                               Center(
                                 child: CustomChatCard(
                                   user: chat,
@@ -239,7 +240,7 @@ class CustomChatCard extends StatelessWidget{
 
               onTap: (){
                     Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => NewChatScreen( receiverID: user.id, receiverName: user.name, sendMessageToSocket: sendMessageToSocket, user: user )
+                      builder: (context) => NewChatScreen( receiverID: user.id, receiverName: user.name, receiverImage: user.img,sendMessageToSocket: sendMessageToSocket)
                     ));
               },
 
@@ -261,17 +262,24 @@ class CustomChatCard extends StatelessWidget{
                                         borderRadius: BorderRadius.circular(15)
                                      ),
                                                             
-                                     child: isGroup? Icon(Icons.people,
-                                                          size: 24, color: Colors.black) : 
+                                     child: user.img== "" ? Icon(Icons.person,
+                                                          size: 24, color: Colors.white)  : 
                                                           
-                                                          Icon(Icons.person,
-                                                          size: 24, color: Colors.black) ,
+                                        CachedNetworkImage(
+                                          imageUrl: user.img,
+                                          imageBuilder: (context, imageProvider) => Container(
+                                            width: 48,
+                                            height: 48,
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(15),
+                                              image: DecorationImage(
+                                                image: imageProvider, fit: BoxFit.cover),
+                                            ),
+                                          ),
+                                          placeholder: (context, url) => CircularProgressIndicator(),
+                                          errorWidget: (context, url, error) => Icon(Icons.error),
+                                          ) ,
                                                         
-                                  // backgroundImage: NetworkImage("${usersList[index]["img_url"]}"),
-                                                
-                                                        
-                                  // child: Icon(Icons.person,
-                                  //     size: 24, color: Colors.black)
                                 ),
                                    ),
 

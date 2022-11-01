@@ -376,6 +376,9 @@ class _SignUp extends State<SignUp>{
         getX.write(constants.GETX_FULLNAME, decodedResponse["user"]["fullname"]);
         getX.write(constants.GETX_IS_LOGGED_IN, "true");
         getX.write(constants.GETX_USER_ID, decodedResponse["user"]["_id"]);
+        getX.write(constants.GETX_EMAIL, decodedResponse["user"]["email"]);
+        // changed this place also remember to send the image url in the response being sent back
+        getX.write(constants.GETX_USER_IMAGE, decodedResponse["user"]["img"]);
 
         setState(() {
           loadingState = 2;

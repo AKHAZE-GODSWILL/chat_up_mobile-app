@@ -42,6 +42,7 @@ class _MyOnboardingState extends State<MyOnboarding> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: 
       Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -51,7 +52,7 @@ class _MyOnboardingState extends State<MyOnboarding> {
           //   mainAxisAlignment: MainAxisAlignment.center,
           //   crossAxisAlignment: CrossAxisAlignment.center,
           //   children: [
-              const SizedBox(height: 36),
+              // const SizedBox(height: 36),
 
               Expanded(
                 child: PageView(
@@ -66,9 +67,9 @@ class _MyOnboardingState extends State<MyOnboarding> {
                 },
                 children: [
                     FirstOnBoard(),
-
+              
                     SecondOnBoard(),
-
+              
                     ThirdOnBoard(),
                 ],
               )),

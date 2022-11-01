@@ -21,14 +21,13 @@ class _FirstOnBoard extends State<FirstOnBoard> {
     Widget build(BuildContext context){
 
       return Scaffold(
-
+        backgroundColor: Colors.white,
         body: Container(
 
             width: double.infinity,
             height: double.infinity,
 
           child: Column(
-
             children: [
 
                 SizedBox(

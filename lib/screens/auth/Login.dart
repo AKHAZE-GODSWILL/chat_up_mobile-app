@@ -295,7 +295,9 @@ class _Login extends State<Login>{
         getX.write(constants.GETX_FULLNAME, decodedResponse["user"]["fullname"]);
         getX.write(constants.GETX_IS_LOGGED_IN, "true");
         getX.write(constants.GETX_USER_ID, decodedResponse["user"]["_id"]);
-
+        // changed this place
+        getX.write(constants.GETX_EMAIL,decodedResponse["user"]["email"]);
+        getX.write(constants.GETX_USER_IMAGE, decodedResponse["user"]["img"]);
         print("I got here thiis after saving the necessary stuffs to the getx");
 
         setState(() {
@@ -303,7 +305,7 @@ class _Login extends State<Login>{
         });
 
         print("I got here this is after setting the loading state back to 2");
-
+        Navigator.pop(context);
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(

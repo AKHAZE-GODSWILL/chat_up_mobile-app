@@ -32,7 +32,6 @@ class _BottomNavBar extends State<BottomNavBar>{
     // final _myBox = Hive.box('myBox');
     String senderID = getX.read(constants.GETX_USER_ID);
     List<ChatModel> usersList = [];
-    // Dont forget to provide the receiver id details anytime you call those fuctions from the message screen
     late String receiverID;
     late IO.Socket socket;
     int current_index = 1;
@@ -54,7 +53,6 @@ class _BottomNavBar extends State<BottomNavBar>{
 
 
     void connect() {
-    //https://chatup-node-deploy.herokuapp.com/
     //"https://chatup-node-deploy.herokuapp.com/"
        socket = IO.io("https://chatup-node-deploy.herokuapp.com/", <String, dynamic>{
       "transports": ["websocket"],
@@ -64,14 +62,9 @@ class _BottomNavBar extends State<BottomNavBar>{
 
     socket.connect(); // this piece of code connects the socket manually
 
-    // Always emit after the connection
+    
     socket.emit("signin",senderID);
-    // This piece of code is used to send a message from the front end to the backend
-    // You have to create an event first and then a message in this case ,
-    // the event is /test and the message is hello world
-    // after creating the event, youn have to go to the backend and listen for the event
-
-    // prints connected if the connection is successful
+    
     // onConnect listens for msgs comming from the API
     socket.onConnect((data) {
       print("Connected");
@@ -85,10 +78,7 @@ class _BottomNavBar extends State<BottomNavBar>{
         // List<String> keys = data.keys.toList();
 
         data.forEach((item){
-          // search for one the elements
-          // search for the key of that element
-          // update the fields of that element
-          // replace file into the exact spot where you took it from using its key
+
           addOnlineStatus(item);
           print(item);
           
@@ -101,10 +91,6 @@ class _BottomNavBar extends State<BottomNavBar>{
         removeOfflineUser(data);
       });
 
-      // // emits your id to be sent to every one that you are online
-      // // This one is for when other people come online when you are online
-      // socket.emit("online", senderID);
-
       socket.on("message", (msg) {
         print(msg);
 
@@ -112,50 +98,49 @@ class _BottomNavBar extends State<BottomNavBar>{
         // The list is structured in a model which contains type and destination
         // If it receives a message, the setMessage function sets type as destination 
 
-        setMessage(msg["sourceId"], "destination", msg["message"],
-            msg["imagePath"]); //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> check this place later
-
-        setChatModel(msg["sourceId"], msg["fullname"], "icons.person",
-            false, msg["message"]);
-
-        // // try and fix this stuff abeg
-        // // research on how to make page animate to the bottom when
-        // //something enters a variable or an array on the get controller page
-        // _scrollController.animateTo(_scrollController.position.maxScrollExtent,
-        //     duration: Duration(milliseconds: 300), curve: Curves.easeOut);
+        setMessage(
+          msg["sourceId"], 
+          "destination",
+          msg["message"],
+          msg["imagePath"]); 
+         
+        setChatModel(
+          msg["sourceId"],
+          msg["fullname"],
+          "icons.person",
+          false,
+          msg['senderImage'],
+          msg["message"]);
       });
     });
 
-
-    print(socket.connected); // this piece of code helps check if your client side socket is connected
+    // this piece of code helps check if your client side socket is connected
     // to the server or not. It returns a bool value
+    print(socket.connected); 
   }
 
 
   
   // supposed to call this inside the set ChatModel
   addOnlineStatus(item){
-
     final chatBox = Hive.box('chats');
     
     usersList.clear();
     usersList.addAll(chatBox.values.toList().cast<ChatModel>());
-          if(usersList.isNotEmpty){
-            var userKey = usersList.indexWhere((element) => element.id == item['id']);
-            if(userKey == -1){
-              print("The if -1 block ran and you have no chat with this guy yet");
+      if(usersList.isNotEmpty){
+        var userKey = usersList.indexWhere((element) => element.id == item['id']);
+        if(userKey == -1){
+          print("The if -1 block ran and you have no chat with this guy yet");
 
-            }else{
-              print("The else block ran. Online status set successfully");
-              ChatModel onlineUser = chatBox.getAt(userKey);
-              onlineUser.isOnline = true;
-              chatBox.putAt(userKey, onlineUser);
-            }
-          }
-
-          else{
-
-          }
+        }
+        else{
+          print("The else block ran. Online status set successfully");
+          ChatModel onlineUser = chatBox.getAt(userKey);
+          onlineUser.isOnline = true;
+          chatBox.putAt(userKey, onlineUser);
+        }
+      }
+      else{}
   }
 
   removeOfflineUser(data){
@@ -166,53 +151,47 @@ class _BottomNavBar extends State<BottomNavBar>{
     if(usersList.isNotEmpty){
       var userKey = usersList.indexWhere((element) => element.id == data['id']);
       if(userKey == -1){
-              print("The if -1 block ran and you have no chat with this guy yet");
+        print("The if -1 block ran and you have no chat with this guy yet");
       }
       else{
-              print("The else block ran. Online status set successfully");
-              ChatModel onlineUser = chatBox.getAt(userKey);
-              onlineUser.isOnline = false;
-              chatBox.putAt(userKey, onlineUser);
-              print("Offline status set successfully");
-            }
+        print("The else block ran. Online status set successfully");
+        ChatModel onlineUser = chatBox.getAt(userKey);
+        onlineUser.isOnline = false;
+        chatBox.putAt(userKey, onlineUser);
+        print("Offline status set successfully");
+      }
     }
     else{}
 
   }
   readChatsFromDB(id){
     final chatBox = Hive.box('chats');
-   Iterable<ChatModel> onlineUser = chatBox.values
-        .where((element) => element._id == id)
-        .cast<ChatModel>();
+    Iterable<ChatModel> onlineUser = chatBox.values
+      .where((element) => element._id == id)
+      .cast<ChatModel>();
   }
 
-  void sendMessageToSocket(message,senderId,receiverId, fullname,dataPath){
-      // I first of all send through the event name message before sending an object that actually had the message
+  void sendMessageToSocket(message,senderId,receiverId, fullname,dataPath, senderImage){
     socket.emit("message", {
       "message": message,
       "sourceId": senderId,
       "targetId": receiverId,
       "fullname": fullname,
-      "imagePath": dataPath
+      "imagePath": dataPath,
+      "senderImage": senderImage
     });
   }
   
-    void setMessage(
-      String conversationId, String type, String message, String imagePath) {
-    MessageModel messagesModel = MessageModel(
+    void setMessage(String conversationId, String type, String message, String imagePath) {
+      MessageModel messagesModel = MessageModel(
         conversationId: conversationId,
         message: message,
         type: type,
         imagePath: imagePath,
         time: DateTime.now().toString().substring(10, 16));
 
-
-    ///>>>>>>>>>> Please come back to this place later if you no want make app dey crash
     chatController.updateMessages(newMsg: messagesModel);
     setState(() {
-
-      // chatController.messages.add(messagesModel);
-      // adding the message to the local database
       addMsg(messagesModel);
     });
   }
@@ -222,14 +201,15 @@ class _BottomNavBar extends State<BottomNavBar>{
     messageBox.add(message);
   }
 
-  //>>>>>> Please come back here abeg make app no dey crash
-  setChatModel(id, name, icon, isGroup, currentMessage) {
+  // the set chat model
+  //>>>>>> Please come back here abeg make app no dey crash.. I guess there is an error somewhere here
+  setChatModel(id, name, icon, isGroup, image,currentMessage) {
     ChatModel chatModel = ChatModel(
         id: id,
         name: name,
         icon: icon,
-        img: "",
-        isGroup: isGroup,
+        img: image,
+        isGroup: false,
         time: DateTime.now().toString().substring(10, 16),
         currentMessage: currentMessage,
         unReadMsgCount: 0,

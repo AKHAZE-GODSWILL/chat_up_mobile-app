@@ -21,7 +21,7 @@ class _SecondOnBoard extends State<SecondOnBoard> {
     Widget build(BuildContext context){
 
       return Scaffold(
-
+        backgroundColor: Colors.white,
         body: Container(
 
             width: double.infinity,

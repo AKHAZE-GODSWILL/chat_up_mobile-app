@@ -30,11 +30,11 @@ TextEditingController _controller = new TextEditingController();
 
 class NewChatScreen extends StatefulWidget {
   const NewChatScreen(
-      {Key? key, required this.receiverName, required this.receiverID, required this.user, required this.sendMessageToSocket})
+      {Key? key, required this.receiverName, required this.receiverID, required this.receiverImage, required this.sendMessageToSocket})
       : super(key: key);
   final String receiverName;
   final String receiverID;
-  final ChatModel user;
+  final String receiverImage;
   final Function sendMessageToSocket;
   State<NewChatScreen> createState() => _NewChatScreen();
 }
@@ -50,6 +50,7 @@ class _NewChatScreen extends State<NewChatScreen> {
   ScrollController _scrollController = ScrollController();
   String imgPath = "";
   String imgExt = "";
+  String myImage = "";
 
   File? readyUploadImage;
   bool hasImg = false;
@@ -96,6 +97,7 @@ class _NewChatScreen extends State<NewChatScreen> {
   @override
   void initState() {
     readMsgs();
+    myImage = getX.read(constants.GETX_USER_IMAGE);
     super.initState();
   }
 
@@ -113,7 +115,7 @@ class _NewChatScreen extends State<NewChatScreen> {
     print(chatController.messages);
   }
 
-  void sendMessage(String message, sourceId, targetId, String imagePath) {
+  void sendMessage(String message, sourceId, targetId, String imagePath){
     // The send message function adds the messages to the list and also sends them through the socket
     // on calling the sendMessage method, the setMessage function sets the type of the message to be
     // Source before saving in the list
@@ -128,11 +130,12 @@ class _NewChatScreen extends State<NewChatScreen> {
       sourceId,
       targetId,
       fullname,
-      imagePath
+      "",
+      myImage,
     );
 
     setChatModel(
-        widget.receiverID, widget.receiverName, "icons.person", false, message);
+        widget.receiverID, widget.receiverName, "icons.person", false,widget.receiverImage, message);
   }
 
   // Forces all the messages to take
@@ -184,7 +187,9 @@ class _NewChatScreen extends State<NewChatScreen> {
       message,
       senderID,
       widget.receiverID,
-      data['path']
+      fullname,
+      data['path'],
+      myImage
     );
   
   }
@@ -195,12 +200,14 @@ class _NewChatScreen extends State<NewChatScreen> {
   }
 
   // I made changes to all the chat Model Schema 
-  setChatModel(id, name, icon, isGroup, currentMessage) {
+  setChatModel(id, name, icon, isGroup, image,currentMessage) {
+    print("The set chat model actually ran with the current message as");
+    print(currentMessage);
     ChatModel chatModel = ChatModel(
         id: id,
         name: name,
         icon: icon,
-        img: "",
+        img: widget.receiverImage,
         isGroup: isGroup,
         time: DateTime.now().toString().substring(10, 16),
         currentMessage: currentMessage,
@@ -244,7 +251,12 @@ class _NewChatScreen extends State<NewChatScreen> {
       // if user is found on the list, his info is updated on the database
       ChatModel chat = chatBox.getAt(userKey);
       chat.unReadMsgCount = 0;
+      chat.currentMessage= chatController.messages[chatController.messages.length - 1].message;
+      chat.img = widget.receiverImage;
+
+      print(chat.img);
       chat.seen = true;
+
       print(">>>>>>>>>>>>> the updated model current message ${chat.currentMessage}");
       chatBox.putAt(userKey,chat);
       print("The else block ran");
@@ -296,6 +308,7 @@ class _NewChatScreen extends State<NewChatScreen> {
                     widget.receiverName,
                     "",
                     false,
+                    widget.receiverImage,
                     chatController.messages[chatController.messages.length-1].message);
                   }
                   

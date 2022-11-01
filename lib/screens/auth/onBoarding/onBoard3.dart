@@ -21,7 +21,7 @@ class _ThirdOnBoard extends State<ThirdOnBoard> {
     Widget build(BuildContext context){
 
       return Scaffold(
-
+        backgroundColor: Colors.white,
         body: Container(
 
             width: double.infinity,
