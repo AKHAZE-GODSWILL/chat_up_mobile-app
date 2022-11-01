@@ -1,7 +1,7 @@
 
 import 'dart:io';
 
-import 'package:chat_up/model/chatModel.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chat_up/screens/inbox/newChatScreen.dart';
 import 'package:chat_up/utils/api_requests.dart';
 import 'package:chat_up/utils/constants.dart';
@@ -75,7 +75,8 @@ class _FindFriends extends State<FindFriends>{
         print('>>>>>>>>>>>>>>> ${response['allUsers'].length}');
 
         addContacts(response['allUsers']);
-        loadUsersFromLocalDataBase();
+
+        loadUsersFromLocalDataBase;
         
       } else {
         loadingState = 4;
@@ -93,22 +94,17 @@ class _FindFriends extends State<FindFriends>{
         usersList.clear();
         loadingState = 4;
       }
-      // setState(() {
-      //   isSearching = false;
-      // });
     });
   }
 
-  //>>>>>>>>>>>> come back to this place later abeg. I don tire
-  // make sure you comeback abeg
-
    addContacts(List contacts) async{
     final contactBox = Hive.box('contacts');
-    contactBox.clear();
-    print(">>>>>>>>>>>>>> the contact box got cleared successfully and there is nothing in the database");
-    for(var d in contacts){
+    contactBox.clear().then((value) {
+      for(var d in contacts){
       contactBox.add(d);
     }
+    });
+    
   }
 
   // The method used to search through the database for local data
@@ -140,53 +136,52 @@ class _FindFriends extends State<FindFriends>{
 
         return Scaffold(
            appBar:AppBar(
+            automaticallyImplyLeading: false,
             elevation: 1,
             backgroundColor: Colors.white,
             title:Column(
               children: [
-                SizedBox(height:13),
+                SizedBox(height:30),
                 Padding(
                     padding: const EdgeInsets.all(12),
-                    child: Card(
-                      
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      elevation: 4,
-                      shadowColor: Colors.grey[100],
-                      child: Container(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
                         color: Colors.grey[300],
-                        child: TextField(
-                          controller: searchController,
-                          onChanged: (val) {
-                            if (val.isNotEmpty) {
-                              setState(() {
-                                isSearching = true;
-                              });
 
-                              searchContacts(searchController.text.toLowerCase().trim());
-                            }
-                          },
-                          decoration: InputDecoration(
-                            prefixIcon: Icon(Icons.search),
-                            suffixIcon: isSearching
-                                ? Padding(
-                                    padding: const EdgeInsets.all(10),
-                                    child: CircularProgressIndicator(),
-                                  )
-                                : IconButton(
-                                    icon: Icon(Icons.close),
-                                    onPressed: () {
-                                      FocusScope.of(context).unfocus();
-                                      searchController.clear();
-                                      usersList.clear();
-                                      loadUsersFromLocalDataBase();  
-                                    },
-                                  ),
+                      ),
+                      child: TextField(
+                        controller: searchController,
+                        onChanged: (val) {
+                          if (val.isNotEmpty) {
+                            setState(() {
+                              isSearching = true;
+                            });
 
-                            // contentPadding: EdgeInsets.fromLTRB(15, 15, 15, 5),
-                            hintText: "Search fullname",
-                            hintStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w300),
-                            border: InputBorder.none,
-                          ),
+                            searchContacts(searchController.text.toLowerCase().trim());
+                          }
+                        },
+                        decoration: InputDecoration(
+                          prefixIcon: Icon(Icons.search),
+                          suffixIcon: isSearching
+                              ? Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: CircularProgressIndicator(),
+                                )
+                              : IconButton(
+                                  icon: Icon(Icons.close),
+                                  onPressed: () {
+                                    FocusScope.of(context).unfocus();
+                                    searchController.clear();
+                                    usersList.clear();
+                                    loadUsersFromLocalDataBase();  
+                                  },
+                                ),
+
+                          // contentPadding: EdgeInsets.fromLTRB(15, 15, 15, 5),
+                          hintText: "Search fullname",
+                          hintStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w300),
+                          border: InputBorder.none,
                         ),
                       ),
                     ),
@@ -266,19 +261,8 @@ class CustomCard extends StatelessWidget{
 
               onTap: (){
 
-                    ChatModel user = ChatModel(id: "",
-                     name: "",
-                     icon: "",
-                     img: "",
-                     isGroup: isGroup,
-                     time: "", 
-                     currentMessage: "",
-                     unReadMsgCount: 0,
-                     seen: false, 
-                     isOnline: false);
-
                     Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => NewChatScreen( receiverID: users['_id'], receiverName: users['fullname'], sendMessageToSocket: sendMessageToSocket, user: user)
+                      builder: (context) => NewChatScreen( receiverID: users['_id'], receiverName: users['fullname'], receiverImage: users['img'],sendMessageToSocket: sendMessageToSocket)
                     ));
               },
 
@@ -297,30 +281,27 @@ class CustomCard extends StatelessWidget{
                                       borderRadius: BorderRadius.circular(15)
                                    ),
                                                           
-                                   child: isGroup? Icon(Icons.people,
-                                                        size: 24, color: Colors.black) : 
+                                   child: users['img']== "" ? Icon(Icons.person,
+                                                        size: 24, color: Colors.white)  : 
                                                         
-                                                        Icon(Icons.person,
-                                                        size: 24, color: Colors.black) ,
-                                                      
-                                  // backgroundImage: NetworkImage("${usersList[index]["img_url"]}"),
-                                              
-                                                      
-                                  // child: Icon(Icons.person,
-                                  //     size: 24, color: Colors.black)
+                                          CachedNetworkImage(
+                                          imageUrl: users['img'],
+                                          imageBuilder: (context, imageProvider) => Container(
+                                            width: 48,
+                                            height: 48,
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(15),
+                                              image: DecorationImage(
+                                                image: imageProvider, fit: BoxFit.cover),
+                                            ),
+                                          ),
+                                          placeholder: (context, url) => CircularProgressIndicator(),
+                                          errorWidget: (context, url, error) => Icon(Icons.error),
+                                          ) ,
+                                                    
                                 ),
 
-                                // Positioned(
-                                //   right:0,
-                                //   child: CircleAvatar(
-                                //     radius: 8,
-                                //     backgroundColor: Colors.white,
-                                //     child: CircleAvatar(
-                                //       radius: 5,
-                                //       backgroundColor: Colors.green,
-                                //     ),
-                                //   ),
-                                // )
+                            
                                 ]
                               ),
                             ),

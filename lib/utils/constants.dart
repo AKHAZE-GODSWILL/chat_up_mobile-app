@@ -12,5 +12,7 @@ class Constants{
   String GETX_USER_ID = "user_id";
   String GETX_FULLNAME = "fullname";
   String GETX_IS_LOGGED_IN = "false";
+  String GETX_USER_IMAGE = "img";
+  String GETX_EMAIL = "email";
 }
 
