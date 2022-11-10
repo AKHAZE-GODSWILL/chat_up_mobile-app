@@ -1,11 +1,11 @@
 
 import 'package:chat_up/model/chatModel.dart';
 import 'package:chat_up/model/messageModel.dart';
+import 'package:chat_up/model/storiesModel.dart';
+import 'package:chat_up/model/storiesSenderModel.dart';
 import 'package:chat_up/screens/auth/onBoarding/onBoard.dart';
 import 'package:chat_up/screens/home/bottomNavBar.dart';
-import 'package:chat_up/screens/inbox/stories.dart';
 import 'package:chat_up/utils/constants.dart';
-import 'package:chat_up/utils/data.dart';
 import 'package:chat_up/utils/myWidgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -43,10 +43,14 @@ Future <void> main() async{
 
   Hive.registerAdapter(ChatModelAdapter());
   Hive.registerAdapter(MessageModelAdapter());
+  Hive.registerAdapter(StoriesSenderModelAdapter());
+  Hive.registerAdapter(StoriesModelAdapter());
 
   await Hive.openBox('messages');
   await Hive.openBox('contacts');
   await Hive.openBox('chats');
+  await Hive.openBox('storySenders');
+  await Hive.openBox('stories');
  
   await GetStorage.init();
   
