@@ -9,6 +9,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:chat_up/controller/chatController.dart';
+import 'package:chat_up/controller/chatListController.dart';
 import 'package:chat_up/main.dart';
 import 'package:chat_up/model/chatModel.dart';
 import 'package:chat_up/model/messageModel.dart';
@@ -41,6 +42,7 @@ class NewChatScreen extends StatefulWidget {
 
 class _NewChatScreen extends State<NewChatScreen> {
    final ChatController chatController = Get.put(ChatController());
+   ChatListController chatListController = Get.put(ChatListController());
 
   String senderID = getX.read(constants.GETX_USER_ID);
   String fullname = getX.read(constants.GETX_FULLNAME);
@@ -106,8 +108,6 @@ class _NewChatScreen extends State<NewChatScreen> {
   readMsgs() {
     final messageBox = Hive.box('messages');
     //////>>>>>>>>>>>>>>>> the message are read into the one at the get controller. Take note of it abeg
-    // chatController.messages.clear();
-    // chatController.messages.addAll();
     chatController.showMsgFromDB(newMsg: messageBox.values
         .toList()
         .where((element) => element.conversationId == widget.receiverID)
@@ -170,16 +170,17 @@ class _NewChatScreen extends State<NewChatScreen> {
     var request = http.MultipartRequest(
         'Post',
         Uri.parse(
-            "https://chatup-node-deploy.herokuapp.com/sendImage/addImage"));
+            "https://chatup-node-deploy.herokuapp.com/posts/uploadImage"));
 
     // The field name is the key value that we used when we were writing the end point
-    request.files.add(await http.MultipartFile.fromPath('img', imgPath));
+    request.fields['token'] = getX.read(constants.GETX_TOKEN);
+    request.files.add(await http.MultipartFile.fromPath('image', imgPath));
     request.headers.addAll({"Content-type": "multipart/form-data"});
 
     http.StreamedResponse response = await request.send();
     var httpResponse = await http.Response.fromStream(response);
     var data = await json.decode(httpResponse.body);
-    print(data['path']);
+    print(data['img_url']);
     print(response.statusCode);
 
 
@@ -188,7 +189,7 @@ class _NewChatScreen extends State<NewChatScreen> {
       senderID,
       widget.receiverID,
       fullname,
-      data['path'],
+      data['img_url'],
       myImage
     );
   
@@ -215,6 +216,8 @@ class _NewChatScreen extends State<NewChatScreen> {
         seen: true,
         isOnline: false);
     addChat(chatModel);
+    
+    chatListController.updateSeenChats(newChat: chatModel, id: id);
   }
 
   addChat(ChatModel chat) {

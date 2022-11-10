@@ -1,16 +1,17 @@
 //// So the logic of this page, This page is interacting with the get controller page and
 ///every other page will be getting info from the controller page
-///now every chat fuction will be declared in the get controller page
-///and called from every other page which is the bottom nav page and the chat page
-///also another way for this to work is that every fuction will be declared here
+///every fuction will be declared here
 ///passed to the home page then passed to the newchatpage also
 ///so the only thing the chat page would be doing is to be calling all these fuctions
 
 
 import 'package:chat_up/controller/chatController.dart';
+import 'package:chat_up/controller/chatListController.dart';
 import 'package:chat_up/main.dart';
 import 'package:chat_up/model/chatModel.dart';
 import 'package:chat_up/model/messageModel.dart';
+import 'package:chat_up/model/storiesModel.dart';
+import 'package:chat_up/model/storiesSenderModel.dart';
 import 'package:chat_up/screens/home/findFriends.dart';
 import 'package:chat_up/screens/home/homeScreen.dart';
 import 'package:chat_up/screens/home/settings.dart';
@@ -29,9 +30,11 @@ class BottomNavBar extends StatefulWidget{
 class _BottomNavBar extends State<BottomNavBar>{
 
      ChatController chatController = Get.put(ChatController());
+     ChatListController chatListController = Get.put(ChatListController());
     // final _myBox = Hive.box('myBox');
     String senderID = getX.read(constants.GETX_USER_ID);
     List<ChatModel> usersList = [];
+    List<StoriesSenderModel> storiesSendersList= [];
     late String receiverID;
     late IO.Socket socket;
     int current_index = 1;
@@ -79,7 +82,7 @@ class _BottomNavBar extends State<BottomNavBar>{
 
         data.forEach((item){
 
-          addOnlineStatus(item);
+          chatListController.addOnlineStatus(item);
           print(item);
           
         });
@@ -88,7 +91,24 @@ class _BottomNavBar extends State<BottomNavBar>{
 
       socket.on("offlineUser",(data){
         print(data);
-        removeOfflineUser(data);
+        chatListController.removeOfflineUser(data);
+      });
+
+      socket.on("stories",(data){
+        print(data);
+        setStorySender(
+          data["storySender"]["name"],
+          data["storySender"]["profileImage"],
+          data["storySender"]["id"]
+          );
+
+        setStories(
+          data["story"]["url"],
+          data["story"]["media"],
+          data["story"]["user"],
+          data["story"]["duration"]
+          );
+        
       });
 
       socket.on("message", (msg) {
@@ -120,50 +140,6 @@ class _BottomNavBar extends State<BottomNavBar>{
   }
 
 
-  
-  // supposed to call this inside the set ChatModel
-  addOnlineStatus(item){
-    final chatBox = Hive.box('chats');
-    
-    usersList.clear();
-    usersList.addAll(chatBox.values.toList().cast<ChatModel>());
-      if(usersList.isNotEmpty){
-        var userKey = usersList.indexWhere((element) => element.id == item['id']);
-        if(userKey == -1){
-          print("The if -1 block ran and you have no chat with this guy yet");
-
-        }
-        else{
-          print("The else block ran. Online status set successfully");
-          ChatModel onlineUser = chatBox.getAt(userKey);
-          onlineUser.isOnline = true;
-          chatBox.putAt(userKey, onlineUser);
-        }
-      }
-      else{}
-  }
-
-  removeOfflineUser(data){
-    final chatBox = Hive.box('chats');
-    
-    usersList.clear();
-    usersList.addAll(chatBox.values.toList().cast<ChatModel>());
-    if(usersList.isNotEmpty){
-      var userKey = usersList.indexWhere((element) => element.id == data['id']);
-      if(userKey == -1){
-        print("The if -1 block ran and you have no chat with this guy yet");
-      }
-      else{
-        print("The else block ran. Online status set successfully");
-        ChatModel onlineUser = chatBox.getAt(userKey);
-        onlineUser.isOnline = false;
-        chatBox.putAt(userKey, onlineUser);
-        print("Offline status set successfully");
-      }
-    }
-    else{}
-
-  }
   readChatsFromDB(id){
     final chatBox = Hive.box('chats');
     Iterable<ChatModel> onlineUser = chatBox.values
@@ -181,6 +157,17 @@ class _BottomNavBar extends State<BottomNavBar>{
       "senderImage": senderImage
     });
   }
+
+  // Story sender is going to be a map and story is also going to be a map
+   void sendStoriesToSocket(sender, story){
+
+    print("Send stories to socket was called in the bottom nav page and an the sender of the story was emitted");
+
+    socket.emit("stories", {
+      "storySender": sender,
+      "story": story,
+    });
+  }
   
     void setMessage(String conversationId, String type, String message, String imagePath) {
       MessageModel messagesModel = MessageModel(
@@ -191,9 +178,8 @@ class _BottomNavBar extends State<BottomNavBar>{
         time: DateTime.now().toString().substring(10, 16));
 
     chatController.updateMessages(newMsg: messagesModel);
-    setState(() {
-      addMsg(messagesModel);
-    });
+    addMsg(messagesModel);
+    
   }
 
   addMsg(MessageModel message) {
@@ -214,11 +200,12 @@ class _BottomNavBar extends State<BottomNavBar>{
         currentMessage: currentMessage,
         unReadMsgCount: 0,
         seen: false,
-        isOnline: true
+        isOnline: false
         );
 
-
+    chatListController.updateIncomingChats(newChat: chatModel, id: id);
     addChat(chatModel, id);
+
   }
 
   // >>>>>>>>>>>>>>>>>>>>>>Cross check this place again
@@ -266,6 +253,80 @@ class _BottomNavBar extends State<BottomNavBar>{
     // chatBox.addAll(usersList);
   }
 
+  setStorySender(name,profileImage, id){
+    StoriesSenderModel storyUser = StoriesSenderModel(
+      name: name,
+      profileImage: profileImage,
+      id: id
+    );
+
+    addStorySenders(storyUser);
+  }
+  setStories(url,mediaType, user, duration){
+    StoriesModel story = StoriesModel(
+      url: url,
+      media: mediaType,
+      user: user,
+      duration: duration
+
+    );
+
+    addStories(story);
+  }
+
+  
+
+  // the add stories method is under check and debug mode
+  addStorySenders(storyUser){
+    final storySendersBox = Hive.box('storySenders');
+    // storySendersBox.add(user); 
+
+    storiesSendersList.clear();
+    storiesSendersList.addAll(storySendersBox.values.toList().cast<StoriesSenderModel>());
+    print("these are the users that sent their stories>>>>>>>> ${storiesSendersList}");
+
+    if(storiesSendersList.isNotEmpty){
+
+    print("if stories list not empty ran>>>>>>>>");
+
+      var userKey = storiesSendersList.indexWhere((element) => element.id == storyUser.id);
+    if (userKey == -1) {
+      // viewed all status feature here
+      print(" if stories list == -1 ran>>>>>>>>");
+      // chat.unReadMsgCount = 1;
+      storySendersBox.add(storyUser);
+      print("The if block ran");
+
+    } else {
+
+      // viewed all status feature here
+      print(" The user key is >>>>>>>>${userKey}");
+      print(" else user list == -1 ran>>>>>>>>");
+      storySendersBox.deleteAt(userKey);
+      storySendersBox.add(storyUser);
+      print("The else block ran");
+
+    }
+
+   }
+   else{
+      print(" the else user list is not empty ran ran>>>>>>>>");
+      // viewed all status feature here
+      storySendersBox.add(storyUser);
+    }
+
+  }
+
+
+  addStories(story){
+
+    // will put the current viewed page number here
+    // to know where to continue from when a page opens
+    final storyBox = Hive.box('stories');
+    storyBox.add(story); 
+    print("story added successfully with no errors");
+  }
+
 
   @override 
 
@@ -275,7 +336,7 @@ class _BottomNavBar extends State<BottomNavBar>{
         List screens = [
     // HomePage(response: widget.response),
     FindFriends(sendMessageToSocket: sendMessageToSocket,),
-    HomeScreen(sendMessageToSocket: sendMessageToSocket,),
+    HomeScreen(sendMessageToSocket: sendMessageToSocket, sendStoriesToSocket: sendStoriesToSocket,),
     Settings(),
   ];
 

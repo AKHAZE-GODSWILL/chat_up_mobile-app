@@ -96,14 +96,14 @@ class _Settings extends State<Settings>{
                                       sendPicture(context);
                                     },
                                     child: CircleAvatar(
-                                      radius: 22,
+                                      radius: 20,
                                       backgroundColor: Colors.white,
                                       child: CircleAvatar(
-                                        radius: 18,
+                                        radius: 15,
                                         backgroundColor: constants.purple,
                                          child: Icon(
                                           Icons.edit_outlined,
-                                          size: 30, color: Colors.white) ,
+                                          size: 20, color: Colors.white) ,
                                       ),
                                     ),
                                   ),
@@ -372,6 +372,8 @@ class _Settings extends State<Settings>{
     Hive.box('messages').clear();
     Hive.box('contacts').clear();
     Hive.box('chats').clear();
+    Hive.box('storySenders').clear();
+    Hive.box('stories').clear();
     getX.remove(constants.GETX_FULLNAME);
     getX.remove(constants.GETX_IS_LOGGED_IN);
     getX.remove(constants.GETX_USER_ID);

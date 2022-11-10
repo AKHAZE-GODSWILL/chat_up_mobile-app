@@ -363,10 +363,22 @@ class MyWidgets {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16)),
                 child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.network(
-                    "https://chatup-node-deploy.herokuapp.com/uploads/$imgPath",
-                    fit: BoxFit.cover),),
+                  borderRadius: BorderRadius.circular(16),
+                  child: CachedNetworkImage(
+                    imageUrl: imgPath,
+                    imageBuilder: (context, imageProvider) => Container(
+                      width: 180.0,
+                      height: 180.0,
+                      decoration: BoxDecoration(
+                        
+                        image: DecorationImage(
+                        image: imageProvider, fit: BoxFit.cover),
+                      ),
+                    ),
+                    placeholder: (context, url) => CircularProgressIndicator(),
+                    errorWidget: (context, url, error) => Icon(Icons.error),
+                  ),
+                ),
             
             ),
                 

@@ -75,6 +75,12 @@ class _FindFriends extends State<FindFriends>{
         print('>>>>>>>>>>>>>>> ${response['allUsers'].length}');
 
         addContacts(response['allUsers']);
+          setState(() {
+            
+            usersList.clear();
+            usersList.addAll(response['allUsers']);
+            loadingState = 1;
+          });
 
         loadUsersFromLocalDataBase;
         
@@ -89,7 +95,6 @@ class _FindFriends extends State<FindFriends>{
         
         print("The network error block ran instead in the catch error block");
         loadingState = 3;
-        loadUsersFromLocalDataBase();
       } else {
         usersList.clear();
         loadingState = 4;

@@ -4,8 +4,9 @@
 // screen........... I think we can solve this error using Future builder
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:chat_up/model/storyModel.dart';
+import 'package:chat_up/model/storiesModel.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:video_player/video_player.dart';
 
 // When you are done, add the one for audio and text... Let's hope it's not too hard
@@ -15,8 +16,9 @@ import 'package:video_player/video_player.dart';
 // singleTickerProvideStateMixin I think this is used when one page is being animated at a time
 
 class Stories  extends StatefulWidget{
- const Stories({Key? key, required this.storyItems}) : super(key: key);
-  final List<StoryModel> storyItems;
+ const Stories({Key? key, required this.storyUserId}) : super(key: key);
+
+  final String storyUserId;
   State<Stories> createState()=> _Stories();
 }
 
@@ -27,6 +29,7 @@ class _Stories extends State<Stories> with SingleTickerProviderStateMixin{
   late VideoPlayerController _videoPlayerController;
   late AnimationController _animationController;
   int currentIndex = 0;
+  List<StoriesModel> specificStories = [];
 
   @override 
   void dispose() {
@@ -39,6 +42,8 @@ class _Stories extends State<Stories> with SingleTickerProviderStateMixin{
   @override
   void initState(){
     super.initState();
+
+    getStories();
     _pageController = PageController();
     // _videoPlayerController.initialize();
     _animationController = AnimationController(vsync: this);
@@ -55,9 +60,9 @@ class _Stories extends State<Stories> with SingleTickerProviderStateMixin{
         _animationController.stop();
         _animationController.reset();
         setState(() {
-          if(currentIndex + 1 < widget.storyItems.length){
+          if(currentIndex + 1 < specificStories.length){
             currentIndex += 1;
-            _loadStory(widget.storyItems[currentIndex]);
+            _loadStory(specificStories[currentIndex]);
           }
           else{
             // any other story operation here returns the out of bound error
@@ -65,7 +70,7 @@ class _Stories extends State<Stories> with SingleTickerProviderStateMixin{
             // or loop story by setting current index back to 0
             Navigator.pop(context);
             currentIndex = 0;
-            // _loadStory(widget.storyItems[currentIndex]);
+            // _loadStory(specificStories.[currentIndex]);
           }
         });
       }
@@ -73,17 +78,17 @@ class _Stories extends State<Stories> with SingleTickerProviderStateMixin{
 
     // would love to know why the video player instantiation was replaced with the load story
 
-    // _videoPlayerController = VideoPlayerController.network(widget.storyItems[2].url)
+    // _videoPlayerController = VideoPlayerController.networkspecificStories[2].url)
     // ..initialize().then((value) => setState((){}));
     // _videoPlayerController.play();
 
-    final StoryModel firstStory = widget.storyItems.first;
-    _loadStory( firstStory, animateToPage: false);
+    final StoriesModel initialStory = specificStories.first;
+    _loadStory( initialStory, animateToPage: false);
   }
 
   @override 
   Widget build(BuildContext context ){
-    final StoryModel story = widget.storyItems[currentIndex];
+    final StoriesModel story = specificStories[currentIndex];
     return Scaffold(
       backgroundColor: Colors.black,
 
@@ -103,15 +108,81 @@ class _Stories extends State<Stories> with SingleTickerProviderStateMixin{
             PageView.builder(
             controller: _pageController, 
             physics: NeverScrollableScrollPhysics(),
-            itemCount: widget.storyItems.length,
+            itemCount: specificStories.length,
             itemBuilder: (context, index){
-                final StoryModel story = widget.storyItems[index];
-                if(story.media == MediaType.image){
-                  return CachedNetworkImage(
-                    imageUrl: story.url,
-                    fit: BoxFit.cover,);
+                final StoriesModel story = specificStories[index];
+                if(story.media == "MediaType.image"){
+                  return Stack(
+                    children: [
+                      Container(
+                        height: MediaQuery.of(context).size.height,
+                        width: MediaQuery.of(context).size.width,
+                        child: CachedNetworkImage(
+                        imageUrl: story.url,
+                        fit: BoxFit.cover,),
+                      ),
+                      Positioned(
+                        top: 55,
+                        left: 10,
+                        child: Container(
+                          height: 48,
+                          width: 180,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                                            
+                                      
+                                         width: 48,
+                                         height: 48,
+                                         decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(15)
+                                         ),
+                                                                
+                                         child: story.user["profileImage"]== "" ? Icon(Icons.person,
+                                                              size: 24, color: Colors.white)  : 
+                                                              
+                                            CachedNetworkImage(
+                                              imageUrl: story.user["profileImage"],
+                                              imageBuilder: (context, imageProvider) => Container(
+                                                width: 48,
+                                                height: 48,
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(15),
+                                                  image: DecorationImage(
+                                                    image: imageProvider, fit: BoxFit.cover),
+                                                ),
+                                              ),
+                                              errorWidget: (context, url, error) => Icon(Icons.error),
+                                              ) ,
+                      
+                                              
+                                                            
+                                    ),
+                      
+                                    SizedBox(width: 10,),
+                                    Container(
+                                      width: 120,
+                                      height: 48,
+                                      child: Center(
+                                        child: Text(story.user["name"],
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.white
+                                          )
+                                        ),
+                                      ),
+                                    )
+                            ],
+                          ),
+                        ),
+                      )
+                    ],
+                  );
                 }
-                else if(story.media == MediaType.video){
+                else if(story.media == "MediaType.video"){
                   if( _videoPlayerController.value.isInitialized){
                     return FittedBox(
                       fit: BoxFit.cover,
@@ -136,7 +207,7 @@ class _Stories extends State<Stories> with SingleTickerProviderStateMixin{
 
                 // children of the row widget is built dynamically based on what was passed into the page view 
                 //builder
-                children: widget.storyItems
+                children: specificStories
                 .asMap()
                 .map((index, e) {
                   // come back to this place and debug so you dont carry errors into a production app
@@ -159,7 +230,7 @@ class _Stories extends State<Stories> with SingleTickerProviderStateMixin{
 
   // what ever functionality given to the taps of the screen is created and being adjusted here
   // update this part to change the tap fuctionality
-  void _onTapDown(TapDownDetails details, StoryModel story){
+  void _onTapDown(TapDownDetails details, StoriesModel story){
     final double screenWidth = MediaQuery.of(context).size.width;
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> research on this place
@@ -168,15 +239,15 @@ class _Stories extends State<Stories> with SingleTickerProviderStateMixin{
       setState(() {
         if(currentIndex - 1 >=0){
           currentIndex -= 1;
-          _loadStory( widget.storyItems[currentIndex]);
+          _loadStory( specificStories[currentIndex]);
         }
       });
     }
     else if(dx>  2 * screenWidth/3){
       setState(() {
-        if(currentIndex + 1 <widget.storyItems.length){
+        if(currentIndex + 1 <specificStories.length){
           currentIndex += 1;
-          _loadStory( widget.storyItems[currentIndex]);
+          _loadStory( specificStories[currentIndex]);
         }
 
         else{
@@ -184,12 +255,12 @@ class _Stories extends State<Stories> with SingleTickerProviderStateMixin{
           //>>>>>>>>>>>>>>>>>>>>and you have to either navigator.pop here or loop story
           Navigator.pop(context);
           currentIndex = 0;
-          _loadStory( widget.storyItems[currentIndex]);
+          _loadStory( specificStories[currentIndex]);
         }
       });
     }
     else{
-      if(story.media == MediaType.video){
+      if(story.media == "MediaType.video"){
         if(_videoPlayerController.value.isPlaying){
           _videoPlayerController.pause();
           _animationController.stop();
@@ -203,16 +274,18 @@ class _Stories extends State<Stories> with SingleTickerProviderStateMixin{
   }
 
   // the load story method to load the next story
-  void _loadStory(StoryModel? story, { bool animateToPage = true}) {
+  void _loadStory(StoriesModel? story, { bool animateToPage = true}) {
     // this value helps us to manipulate the length of the progres
     _animationController.stop();
     _animationController.reset();
 
-    if(story?.media == MediaType.image){
-      _animationController.duration = story?.duration;
+    if(story?.media == "MediaType.image"){
+
+      //*********************change the duration here to the duration of each stories in the stories model
+      _animationController.duration = Duration(seconds: 7);
       _animationController.forward();
     }
-    else if(story?.media == MediaType.video){
+    else if(story?.media == "MediaType.video"){
 
       // _videoPlayerController = null;
       _videoPlayerController.dispose();
@@ -236,6 +309,17 @@ class _Stories extends State<Stories> with SingleTickerProviderStateMixin{
         duration: const Duration(milliseconds: 1),
         curve: Curves.easeOut);
     }
+  }
+
+   getStories(){
+
+    // check the name of this box again
+    final storiesBox = Hive.box('stories');
+    specificStories.clear();
+    specificStories.addAll(storiesBox.values
+      .toList()
+      .where((element) => element.user["id"] == widget.storyUserId)
+      .cast<StoriesModel>());
   }
   
 }
@@ -302,4 +386,6 @@ class AnimatedBar extends StatelessWidget{
       ),
     );
   }
+
+ 
 }

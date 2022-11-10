@@ -1,25 +1,35 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:chat_up/controller/chatController.dart';
+import 'package:chat_up/controller/chatListController.dart';
 import 'package:chat_up/main.dart';
 import 'package:chat_up/model/chatModel.dart';
+import 'package:chat_up/model/storiesSenderModel.dart';
+import 'package:chat_up/screens/home/stories/stories.dart';
+import 'package:chat_up/screens/home/stories/addStories.dart';
 import 'package:chat_up/screens/inbox/newChatScreen.dart';
-import 'package:chat_up/screens/inbox/stories.dart';
 import 'package:chat_up/utils/constants.dart';
-import 'package:chat_up/utils/data.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class HomeScreen extends StatefulWidget{
 
-  const HomeScreen({Key? key, required this.sendMessageToSocket}) : super(key: key);
+  const HomeScreen({Key? key, required this.sendMessageToSocket, required this.sendStoriesToSocket}) : super(key: key);
   final Function sendMessageToSocket;
+  final Function sendStoriesToSocket;
   State<HomeScreen> createState()=> _HomeScreen();
 }
 
 class _HomeScreen extends State<HomeScreen>{
+
+  ChatController chatController = Get.put(ChatController());
+  ChatListController chatListController = Get.put(ChatListController());
+
   List<ChatModel> usersList = [];
   bool isGroup= false;
   Box chatsBox = Hive.box('chats');
+  Box storiesSenderBox = Hive.box('storySenders');
   // Future openBox()async{
   //   chatsBox = await Hive.openBox('chats');
   // }
@@ -67,126 +77,138 @@ class _HomeScreen extends State<HomeScreen>{
               color: Colors.grey,
              )),]
                   ),
-                  body: Column(
-                    
-                     children: [
-                      Container(
-                        margin: EdgeInsets.only(
-                          left: 16,
-                          top: 10,
-                          bottom:40
-                          
-                        ),
-                        width: MediaQuery.of(context).size.width,
-                        height: 70,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: 2,
-                                itemBuilder: (context, index) {
-                                  // ChatModel oneUser = chatsBox.getAt(0);
-                                  return index == 0? Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: GestureDetector(
-                                      onTap: (){},
-                                      child: Container(
+                  body: SingleChildScrollView(
+                    physics: ScrollPhysics(),
+                    child: Column(
+                       crossAxisAlignment: CrossAxisAlignment.start,
+                       children: [
 
-                                      width: 52,
-                                      height: 52,
-                                      child: Center(
+                        Container(
+                          height:100,
+                          child: SingleChildScrollView(
+                            physics: ScrollPhysics(),
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              
+                              children: [
+                                SizedBox(width: 12,),
+
+                                Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: GestureDetector(
+                                        onTap: (){
+                                          Navigator.push(context,
+                                            MaterialPageRoute(builder: (context)=> AddStories(sendStoriesToSocket: widget.sendStoriesToSocket,)));
+                                        },
                                         child: Container(
-                                                           
-                                          
-                                        width: 48,
-                                        height: 48,
-                                        decoration: BoxDecoration(
-                                           color: Colors.grey ,
-                                           borderRadius: BorderRadius.circular(15)
-                                        ),
-                                                               
-                                        child:Icon(Icons.add,
-                                                  size: 24, color: Colors.black) ,
-                                                           
-                                          // backgroundImage: NetworkImage("${usersList[index]["img_url"]}"),
+                                        // color: Colors.red,
+                                        width: 70,
+                                        height: 100,
+                                        child: Column(
+                                          children: [
+                                            Center(
+                                              child: Stack(
+                                                children: [
+                                                  Container(
+                                                  width: 56,
+                                                  height: 56,
+                                                  decoration: BoxDecoration(
+                                                    //  color: Colors.blue ,
+                                                    border: Border.all(
+                                                      color: Color(0XFFADB5BD),
+                                                      width: 2
+                                                    ),
+                                                     borderRadius: BorderRadius.circular(16)
+                                                  ),
                                                    
-                                                           
-                                          // child: Icon(Icons.person,
-                                          //     size: 24, color: Colors.black)
+                                                ),
+
+                                                Padding(
+                                                  padding: EdgeInsets.all(4),
+                                                  child: Container(
+                                                                       
+                                                    
+                                                    width: 48,
+                                                    height: 48,
+                                                    decoration: BoxDecoration(
+                                                       color: Color(0XFFF7F7FC) ,
+                                                       borderRadius: BorderRadius.circular(16)
+                                                    ),
+                                                                           
+                                                    child:Icon(Icons.add,
+                                                              size: 24, color: Color(0XFFADB5BD)) ,
+                                                    ),
+                                                ),
+                                                ],
+                                              ),
+                                            ),
+
+                                            SizedBox(height: 10,),
+
+                                            Text("Your Story",
+                                            style: TextStyle(
+                                              fontSize: 10
+                                            ))
+                                          ],
                                         ),
                                       ),
+                                      ),
                                     ),
-                                    ),
-                                  ):Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: GestureDetector(
-                                      onTap: (){
-                                        Navigator.push(context,
-                                          MaterialPageRoute(builder: ((context) => Stories(storyItems: stories))
-                                          )
+
+                                ValueListenableBuilder(
+
+                                  valueListenable: storiesSenderBox.listenable(), 
+                                  builder: (context, Box storiesUser, _){
+                                    List<int> keys = storiesSenderBox.keys.cast<int>().toList();
+                                    keys = keys.reversed.toList();
+                                    return ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      shrinkWrap: true,
+                                      physics: NeverScrollableScrollPhysics(),
+                                      itemCount: keys.length,
+                                      itemBuilder: (context, index) {
+                                        // ChatModel oneUser = chatsBox.getAt(0);
+                                        final int key = keys[index];
+                                        final StoriesSenderModel storyUser = storiesSenderBox.get(key)!;
+                                        return Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: GestureDetector(
+                                            onTap: (){
+                                              Navigator.push(context,
+                                                MaterialPageRoute(builder: ((context) => Stories(storyUserId: storyUser.id))
+                                                )
+                                              );
+                                            },
+                                            child: customStatusSender(storyUser)
+                                          ),
                                         );
                                       },
-                                      child: Container(
+                                );
+                                  })
 
-                                      width: 52,
-                                      height: 52,
-                                      child: Center(
-                                        child: Container(
-                                                           
-                                          
-                                        width: 48,
-                                        height: 48,
-                                        decoration: BoxDecoration(
-                                           color: Constants().purple ,
-                                           borderRadius: BorderRadius.circular(15)
-                                        ),
-                                                               
-                                        child: isGroup? Icon(Icons.people,
-                                                             size: 24, color: Colors.black) : 
-                                                             
-                                                             Icon(Icons.person,
-                                                             size: 24, color: Colors.black) ,
-                                                           
-                                          // backgroundImage: NetworkImage("${usersList[index]["img_url"]}"),
-                                                   
-                                                           
-                                          // child: Icon(Icons.person,
-                                          //     size: 24, color: Colors.black)
-                                        ),
-                                      ),
-                                    ),
-                                    ),
-                                  );
-                                },
-                              ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-
-                      Expanded(
-                        child: ValueListenableBuilder(
-                          valueListenable: chatsBox.listenable(),
                   
-                          builder: (context, Box chat, _,){
-                            List<int> keys = chatsBox.keys.cast<int>().toList();
-                            keys = keys.reversed.toList();
+                        GetBuilder<ChatListController>(
+                          builder: (_){
+
                             return ListView.builder(
-                      
-                    // controller: _scrollController,
-                    
-                    shrinkWrap: true,
-                    itemCount:  keys.length, 
-                     // usersList.length,
-                     itemBuilder: (context, index){
-                      
-                      final int key = keys[index];
-                      final ChatModel chat = chatsBox.get(key)!;
-                      return Padding(
-                      
-                       padding: const EdgeInsets.only(left: 4, right:4, top:1, bottom:1),
-                       child: Container(
+                        
+                      // controller: _scrollController,
+                      physics: NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount:  chatListController.usersList.length, 
+                       // usersList.length,
+                       itemBuilder: (context, index){
+                        
+
+                        final ChatModel chat = chatListController.usersList[index];
+                        return Padding(
+                        
+                         padding: const EdgeInsets.only(left: 4, right:4, top:1, bottom:1),
+                         child: Container(
                           margin: EdgeInsets.all(5),
                           height: 80,
                           width: MediaQuery.of(context).size.width,
@@ -201,28 +223,97 @@ class _HomeScreen extends State<HomeScreen>{
                               )       
                             ],
                           )
-                       ),
-                     );}
-                  );
-                  },
-                ),
-              ),
-            ]
-          )
+                         ),
+                       );}
+                    );
+                          })
+
+                              ]
+                            ),
+                  )
           
         );
       
   }
 
+
+  Widget customStatusSender(storyUser){
+    return Container(
+      // color: Colors.red,
+      width: 70,
+      height: 100,
+      child: Column(
+        children: [
+          Center(
+            child: Stack(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    // color: Colors.blue ,
+                    border: Border.all(
+                      color: Color(0XFF2C37E1),
+                      width: 2
+                    ),
+                    borderRadius: BorderRadius.circular(16)
+                  ),
+                                                    
+                ),
+
+                Container(
+                  margin: EdgeInsets.all(4),
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.grey ,
+                    borderRadius: BorderRadius.circular(16)
+                  ),
+                  child:storyUser.profileImage== "" ? Icon(
+                    Icons.person,
+                    size: 24, color: Colors.white)  : 
+                                                          
+                    CachedNetworkImage(
+                      imageUrl: storyUser.profileImage,
+                      imageBuilder: (context, imageProvider) => Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          image: DecorationImage(
+                            image: imageProvider, 
+                            fit: BoxFit.cover),
+                        ),
+                      ),
+                      placeholder: (context, url) => CircularProgressIndicator(),
+                      errorWidget: (context, url, error) => Icon(Icons.error),
+                    ) ,
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: 10,),
+          Text(storyUser.name,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10
+            )
+          )
+        ],
+      ),
+    );
+  }
+
   readChats()async{
     final chatBox =  await Hive.box('chats');
-    setState(() {
-      print(chatBox.values.toList());
-       usersList.addAll(chatBox.values.toList().cast<ChatModel>());
-    print(">>>>>>>>> the users list is ${usersList}");
-    });
-   
 
+    //   print(chatBox.values.toList());
+    //    usersList.addAll(chatBox.values.toList().cast<ChatModel>());
+    // print(">>>>>>>>> the users list is ${usersList}");
+    chatListController.usersList.clear();
+    chatListController.showChatsFromDB(allChats: chatBox.values.toList().cast<ChatModel>());
+   
   }
 }
 
@@ -239,6 +330,7 @@ class CustomChatCard extends StatelessWidget{
           return InkWell(
 
               onTap: (){
+                    print(user.isOnline);
                     Navigator.push(context, MaterialPageRoute(
                       builder: (context) => NewChatScreen( receiverID: user.id, receiverName: user.name, receiverImage: user.img,sendMessageToSocket: sendMessageToSocket)
                     ));
