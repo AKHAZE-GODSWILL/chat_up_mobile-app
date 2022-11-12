@@ -31,12 +31,17 @@ TextEditingController _controller = new TextEditingController();
 
 class NewChatScreen extends StatefulWidget {
   const NewChatScreen(
-      {Key? key, required this.receiverName, required this.receiverID, required this.receiverImage, required this.sendMessageToSocket})
+      {Key? key, required this.receiverName,
+      required this.receiverID,
+      required this.receiverImage,
+      required this.sendMessageToSocket,
+      required this.sendWaveToSocket})
       : super(key: key);
   final String receiverName;
   final String receiverID;
   final String receiverImage;
   final Function sendMessageToSocket;
+  final Function sendWaveToSocket;
   State<NewChatScreen> createState() => _NewChatScreen();
 }
 
@@ -286,7 +291,7 @@ class _NewChatScreen extends State<NewChatScreen> {
   Widget chatBody() {
     return Scaffold(
       // I'll run a request in the init state to get me the names of the receiver or the person I am chatting with
-      appBar: MyWidgets().appBar(ctx: context, title: widget.receiverName),
+      appBar: appBar(context: context, title: widget.receiverName, userId: widget.receiverID),
       body: Container(
         height: MediaQuery.of(context).size.height,
         width: MediaQuery.of(context).size.width,
@@ -356,7 +361,7 @@ class _NewChatScreen extends State<NewChatScreen> {
                 alignment: Alignment.bottomCenter,
                 child: Container(
                   color: Colors.white,
-                  height: 70,
+                  height: 100,
                   width: MediaQuery.of(context).size.width,
                   child: Column(
                     children: [
@@ -374,7 +379,7 @@ class _NewChatScreen extends State<NewChatScreen> {
                         ),
                         Container(
                             width: MediaQuery.of(context).size.width - 100,
-                            height: 50,
+                            height:70,
                             child: Card(
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(4)),
@@ -384,7 +389,8 @@ class _NewChatScreen extends State<NewChatScreen> {
                                   textAlignVertical: TextAlignVertical.center,
                                   keyboardType: TextInputType.multiline,
                                   maxLines: null,
-                                  minLines: 1,
+                                  expands: true,
+                                  minLines: null,
                                   decoration: InputDecoration(
                                     border: InputBorder.none,
                                     hintText: "Type a message",
@@ -500,6 +506,64 @@ class _NewChatScreen extends State<NewChatScreen> {
           ),
         );
       },
+    );
+  }
+
+  appBar(
+      {required BuildContext context, required String title, required String userId ,bool toHome = false}) {
+    return AppBar(
+      toolbarHeight: 45,
+      elevation: 0.5,
+      leading: GestureDetector(
+        onTap: () {
+          Navigator.of(context).pop();
+          // toHome? Navigator.of(ctx).push(MaterialPageRoute(builder: (ctx) => const BottomNavBar())) : Navigator.pop(ctx);
+        },
+        child: const Icon(
+          Icons.arrow_back_ios,
+          color: Colors.black,
+          size: 24,
+        ),
+      ),
+      backgroundColor: Colors.white,
+      title: Container(
+        
+        margin: EdgeInsets.all(4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.w400,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right:20.0),
+          child: IconButton(onPressed: (){
+            print("Clicked the action button");
+            widget.sendWaveToSocket(
+              getX.read(constants.GETX_FULLNAME),
+              getX.read(constants.GETX_USER_IMAGE),
+              widget.receiverID,
+              getX.read(constants.GETX_USER_ID),
+            );
+            myWidgets.showToast(message: "Wave sent successfully");
+          },
+               icon: Icon(
+                Icons.waving_hand,
+                size: 27,
+                color: Colors.grey,
+               )),
+        ),
+      ],
+      // centerTitle: true,
     );
   }
 }
