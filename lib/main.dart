@@ -1,4 +1,15 @@
-
+//// The most important things that I need to fix
+/// The typing area to type texts need to expands,
+/// Card needs to shorten long names that can cause overflow error to the app
+/// Also the long messages that can cause overflow error to the app
+/// and also, I need to put something else in place of the find friends screen
+/// also , I need to fix the no internet part of the app
+/// also, try and put the rest toast or atleast a reponse message
+/// and a circular progress indicator
+/// also for me to try to animate the screen to the bottom anytime I enter a new page or a sender sends me a message
+/// I need to get all the real assets used in the UI/UX and use them here
+/// also I need to align the message and the picture cards too
+/// I need to fix the status saver screen if I am the one that makes a post
 import 'package:chat_up/model/chatModel.dart';
 import 'package:chat_up/model/messageModel.dart';
 import 'package:chat_up/model/storiesModel.dart';

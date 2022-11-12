@@ -10,8 +10,9 @@ import 'package:hive/hive.dart';
 
 class FindFriends extends StatefulWidget{
 
-  const FindFriends({Key? key, required this.sendMessageToSocket}) : super(key: key);
+  const FindFriends({Key? key, required this.sendMessageToSocket, required this.sendWaveToSocket}) : super(key: key);
   final Function sendMessageToSocket;
+  final Function sendWaveToSocket;
   State<FindFriends> createState()=> _FindFriends();
 }
 
@@ -94,7 +95,7 @@ class _FindFriends extends State<FindFriends>{
       if (e is SocketException) {
         
         print("The network error block ran instead in the catch error block");
-        loadingState = 3;
+        // loadingState = 3;
       } else {
         usersList.clear();
         loadingState = 4;
@@ -140,13 +141,40 @@ class _FindFriends extends State<FindFriends>{
   Widget build(BuildContext context){
 
         return Scaffold(
+          backgroundColor: Colors.white,
            appBar:AppBar(
             automaticallyImplyLeading: false,
-            elevation: 1,
+            elevation: 0,
             backgroundColor: Colors.white,
-            title:Column(
-              children: [
-                SizedBox(height:30),
+          ),
+          body: buildBody()
+          
+        );
+  }
+
+  // this build body method is responsible for changing the Ui of the app based on the data available
+
+  Widget buildBody(){
+    if(loadingState == 0){
+      return Center(child: CircularProgressIndicator());
+    }
+    else if(loadingState == 2){
+      return Center(child: Text("No Contacts found"));
+    }
+    else if(loadingState == 3){
+      return Center(child: Text("Something went wrong with your connection. Try again"));
+    }
+    else if(loadingState == 4){
+      return Center(child: Text("Some error occured. Try again"));
+    }
+    else if(loadingState == 5){
+      return Center(child: Text("Something went wrong with the server. Try again"));
+    }
+    else if(loadingState == 1){
+      return  Column(
+            children: [
+
+
                 Padding(
                     padding: const EdgeInsets.all(12),
                     child: Container(
@@ -192,35 +220,8 @@ class _FindFriends extends State<FindFriends>{
                     ),
                   ),
 
-                  SizedBox(height:30),
-              ],
-            ),),
-          body: buildBody()
-          
-        );
-  }
-
-  // this build body method is responsible for changing the Ui of the app based on the data available
-
-  Widget buildBody(){
-    if(loadingState == 0){
-      return Center(child: CircularProgressIndicator());
-    }
-    else if(loadingState == 2){
-      return Center(child: Text("No Contacts found"));
-    }
-    else if(loadingState == 3){
-      return Center(child: Text("Something went wrong with your connection. Try again"));
-    }
-    else if(loadingState == 4){
-      return Center(child: Text("Some error occured. Try again"));
-    }
-    else if(loadingState == 5){
-      return Center(child: Text("Something went wrong with the server. Try again"));
-    }
-    else if(loadingState == 1){
-      return  Column(
-            children: [
+                  SizedBox(height:10),
+                Divider(),
                 Expanded(
                   child: ListView.builder(
                   // controller: _scrollController,
@@ -236,7 +237,7 @@ class _FindFriends extends State<FindFriends>{
                         child: Column(
                           children: [                 
                             // Debug this place later abeg............. or this code go crash
-                            Center(child: CustomCard(users: usersList[index], isGroup: isGroup, sendMessageToSocket: widget.sendMessageToSocket))  
+                            Center(child: CustomCard(users: usersList[index], isGroup: isGroup, sendMessageToSocket: widget.sendMessageToSocket, sendWaveToSocket: widget.sendWaveToSocket))  
                           ],
                         )
                       ),
@@ -254,10 +255,11 @@ class _FindFriends extends State<FindFriends>{
 
 class CustomCard extends StatelessWidget{
 
-      const CustomCard({Key? key,required this.users, required this.isGroup, required this.sendMessageToSocket}) : super(key: key);
+      const CustomCard({Key? key,required this.users, required this.isGroup, required this.sendMessageToSocket, required this.sendWaveToSocket}) : super(key: key);
       final Map<dynamic,dynamic> users;
       final bool isGroup;
       final Function sendMessageToSocket;
+      final Function sendWaveToSocket;
 
       @override 
       Widget build(BuildContext context){
@@ -266,8 +268,14 @@ class CustomCard extends StatelessWidget{
 
               onTap: (){
 
+                    Navigator.pop(context);
                     Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => NewChatScreen( receiverID: users['_id'], receiverName: users['fullname'], receiverImage: users['img'],sendMessageToSocket: sendMessageToSocket)
+                      builder: (context) => NewChatScreen( 
+                        receiverID: users['_id'], 
+                        receiverName: users['fullname'], 
+                        receiverImage: users['img'],
+                        sendMessageToSocket: sendMessageToSocket,
+                        sendWaveToSocket: sendWaveToSocket)
                     ));
               },
 

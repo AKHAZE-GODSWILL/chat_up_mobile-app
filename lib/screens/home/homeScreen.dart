@@ -5,6 +5,7 @@ import 'package:chat_up/controller/chatListController.dart';
 import 'package:chat_up/main.dart';
 import 'package:chat_up/model/chatModel.dart';
 import 'package:chat_up/model/storiesSenderModel.dart';
+import 'package:chat_up/screens/home/findFriends.dart';
 import 'package:chat_up/screens/home/stories/stories.dart';
 import 'package:chat_up/screens/home/stories/addStories.dart';
 import 'package:chat_up/screens/inbox/newChatScreen.dart';
@@ -15,19 +16,22 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 class HomeScreen extends StatefulWidget{
 
-  const HomeScreen({Key? key, required this.sendMessageToSocket, required this.sendStoriesToSocket}) : super(key: key);
+  const HomeScreen({Key? key, required this.sendMessageToSocket, required this.sendStoriesToSocket, required this.sendWaveToSocket}) : super(key: key);
   final Function sendMessageToSocket;
   final Function sendStoriesToSocket;
+  final Function sendWaveToSocket;
   State<HomeScreen> createState()=> _HomeScreen();
 }
 
 class _HomeScreen extends State<HomeScreen>{
 
+  ScrollController _scrollController = ScrollController();
   ChatController chatController = Get.put(ChatController());
   ChatListController chatListController = Get.put(ChatListController());
 
   List<ChatModel> usersList = [];
   bool isGroup= false;
+  bool isFAB = false;
   Box chatsBox = Hive.box('chats');
   Box storiesSenderBox = Hive.box('storySenders');
   // Future openBox()async{
@@ -37,6 +41,18 @@ class _HomeScreen extends State<HomeScreen>{
   void initState() {
 
     print('before the box has been accessed in the init state');
+    _scrollController.addListener(() {
+      if (_scrollController.offset > 50) {
+        setState(() {
+          isFAB = true;
+        });
+      }
+      else{
+        setState(() {
+          isFAB = false;
+        });
+      }
+    });
     readChats();
     print("after the box has been accessed in the init state");
     // final chatBox = Hive.box('chat');
@@ -45,6 +61,12 @@ class _HomeScreen extends State<HomeScreen>{
     // .cast<ChatModel>()
     // );
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
 
@@ -77,7 +99,9 @@ class _HomeScreen extends State<HomeScreen>{
               color: Colors.grey,
              )),]
                   ),
+                  floatingActionButton: isFAB? buildAnimatedFAB(): buildFAB(),
                   body: SingleChildScrollView(
+                    controller: _scrollController,
                     physics: ScrollPhysics(),
                     child: Column(
                        crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,6 +186,7 @@ class _HomeScreen extends State<HomeScreen>{
                                     List<int> keys = storiesSenderBox.keys.cast<int>().toList();
                                     keys = keys.reversed.toList();
                                     return ListView.builder(
+                                      
                                       scrollDirection: Axis.horizontal,
                                       shrinkWrap: true,
                                       physics: NeverScrollableScrollPhysics(),
@@ -218,7 +243,8 @@ class _HomeScreen extends State<HomeScreen>{
                                 child: CustomChatCard(
                                   user: chat,
                                   isGroup: isGroup,
-                                  sendMessageToSocket: widget.sendMessageToSocket
+                                  sendMessageToSocket: widget.sendMessageToSocket,
+                                  sendWaveToSocket: widget.sendWaveToSocket
                                 )
                               )       
                             ],
@@ -236,6 +262,53 @@ class _HomeScreen extends State<HomeScreen>{
       
   }
 
+
+  Widget buildAnimatedFAB(){
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 200),
+      curve: Curves.linear,
+      height: 50,
+      width: 170,
+      child: FloatingActionButton.extended(
+        backgroundColor: constants.purple,
+        onPressed: (){
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => FindFriends(sendMessageToSocket: widget.sendMessageToSocket, sendWaveToSocket: widget.sendWaveToSocket),));
+        },
+        icon: Icon(
+          Icons.search
+        ),
+        label: Center(
+          child: Text("Search Friends",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12
+            ),)
+        )),
+    );
+  }
+
+  Widget buildFAB(){
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 200),
+      curve: Curves.linear,
+      height: 50,
+      width: 50,
+      child: FloatingActionButton.extended(
+        backgroundColor: constants.purple,
+        onPressed: (){
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => FindFriends(sendMessageToSocket: widget.sendMessageToSocket, sendWaveToSocket: widget.sendWaveToSocket),));
+        },
+        icon: Padding(
+          padding: const EdgeInsets.only(left:10.0),
+          child: Icon(Icons.search),
+        ),
+        label: SizedBox()),
+    );
+  }
 
   Widget customStatusSender(storyUser){
     return Container(
@@ -319,8 +392,9 @@ class _HomeScreen extends State<HomeScreen>{
 
 class CustomChatCard extends StatelessWidget{
 
-      const CustomChatCard({Key? key,required this.user, required this.isGroup, required this.sendMessageToSocket}) : super(key: key);
+      const CustomChatCard({Key? key,required this.user, required this.isGroup, required this.sendMessageToSocket, required this.sendWaveToSocket}) : super(key: key);
       final Function sendMessageToSocket;
+      final Function sendWaveToSocket;
       final ChatModel user;
       final bool isGroup;
 
@@ -332,7 +406,7 @@ class CustomChatCard extends StatelessWidget{
               onTap: (){
                     print(user.isOnline);
                     Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => NewChatScreen( receiverID: user.id, receiverName: user.name, receiverImage: user.img,sendMessageToSocket: sendMessageToSocket)
+                      builder: (context) => NewChatScreen( receiverID: user.id, receiverName: user.name, receiverImage: user.img,sendMessageToSocket: sendMessageToSocket, sendWaveToSocket: sendWaveToSocket)
                     ));
               },
 
@@ -392,6 +466,7 @@ class CustomChatCard extends StatelessWidget{
                             ),
                         
                             title:Text(user.name,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w400,
                                   fontSize: 13,
@@ -399,6 +474,7 @@ class CustomChatCard extends StatelessWidget{
                         
                             subtitle: 
                             Text(user.currentMessage,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                             color: user.seen == true? constants.readGrey: constants.unRead ,
                             fontWeight: user.seen == true?FontWeight.w400: FontWeight.w700,

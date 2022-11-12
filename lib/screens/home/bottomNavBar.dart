@@ -12,6 +12,7 @@ import 'package:chat_up/model/chatModel.dart';
 import 'package:chat_up/model/messageModel.dart';
 import 'package:chat_up/model/storiesModel.dart';
 import 'package:chat_up/model/storiesSenderModel.dart';
+import 'package:chat_up/screens/home/NothingPage.dart';
 import 'package:chat_up/screens/home/findFriends.dart';
 import 'package:chat_up/screens/home/homeScreen.dart';
 import 'package:chat_up/screens/home/settings.dart';
@@ -111,6 +112,12 @@ class _BottomNavBar extends State<BottomNavBar>{
         
       });
 
+      socket.on("wave",(data){
+        print(data);
+        myWidgets.showCustomWaveToast(context, data["profileImage"], data["name"]);
+        
+      });
+
       socket.on("message", (msg) {
         print(msg);
 
@@ -168,6 +175,19 @@ class _BottomNavBar extends State<BottomNavBar>{
       "story": story,
     });
   }
+
+   void sendWaveToSocket(name, profileImage, targetId, sourceId){
+
+    print("Send waves to the socket was called successfully in the bottom nav bar");
+
+    socket.emit("wave", {
+      "name": name,
+      "profileImage": profileImage,
+      "targetId": targetId,
+      "sourceId": sourceId,
+    });
+  }
+
   
     void setMessage(String conversationId, String type, String message, String imagePath) {
       MessageModel messagesModel = MessageModel(
@@ -327,6 +347,15 @@ class _BottomNavBar extends State<BottomNavBar>{
     print("story added successfully with no errors");
   }
 
+  Widget ellipsisDots(color){
+    return Padding(
+      padding: const EdgeInsets.all(1.0),
+      child: CircleAvatar(
+        radius: 4,
+        backgroundColor: color
+      ),
+    );
+  }
 
   @override 
 
@@ -335,8 +364,12 @@ class _BottomNavBar extends State<BottomNavBar>{
 
         List screens = [
     // HomePage(response: widget.response),
-    FindFriends(sendMessageToSocket: sendMessageToSocket,),
-    HomeScreen(sendMessageToSocket: sendMessageToSocket, sendStoriesToSocket: sendStoriesToSocket,),
+    NothingPage(),
+    HomeScreen(
+      sendMessageToSocket: sendMessageToSocket,
+      sendStoriesToSocket: sendStoriesToSocket,
+      sendWaveToSocket: sendWaveToSocket
+      ),
     Settings(),
   ];
 
@@ -392,31 +425,45 @@ class _BottomNavBar extends State<BottomNavBar>{
               ),
               activeIcon: Padding(
                 padding: const EdgeInsets.only(bottom: 5, top: 3),
-                child: Text("chats",
-                
-                style: TextStyle(
-                            color: Constants().purple
-                          )),
+                child: Column(
+                  children: [
+                    Text("chats",
+                    
+                    style: TextStyle(
+                                color: Constants().purple
+                              )),
+                    ellipsisDots(constants.purple)
+                  ],
+                ),
               ),
 
 
               label: '',
             ),
             BottomNavigationBarItem(
-              icon: const Padding(
+              icon:  Padding(
                 padding: EdgeInsets.only(bottom: 7, top: 6),
-                child: Text("...")
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ellipsisDots(Colors.grey),
+                    ellipsisDots(Colors.grey),
+                    ellipsisDots(Colors.grey)
+                  ],
+                )
                 
                 // Icon(Icons.history_outlined,
                 //     size: 24, color: Color.fromRGBO(0, 0, 0, 0.5)),
               ),
               activeIcon: Padding(
                 padding: const EdgeInsets.only(bottom: 5, top: 3),
-                child: Text("...",
-                
-                    style: TextStyle(
-                            color: Constants().purple
-                          )
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ellipsisDots(constants.purple),
+                    ellipsisDots(constants.purple),
+                    ellipsisDots(constants.purple)
+                  ],
                 )
                 
                 // CircleAvatar(
